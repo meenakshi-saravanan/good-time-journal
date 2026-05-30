@@ -1,5 +1,5 @@
 body {
-  font-family: Arial, sans-serif;
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif, sans-serif;
   background: #f4f6f8;
   margin: 0;
   padding: 20px;
@@ -35,6 +35,8 @@ button {
   margin-top: 16px;
   padding: 12px 20px;
   cursor: pointer;
+  color: white;
+  background-color: blue;
 }
 
 .entry-card {
