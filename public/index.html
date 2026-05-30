@@ -1,0 +1,81 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <title>Good Time Journal</title>
+  <link rel="stylesheet" href="css/style.css">
+</head>
+
+<body>
+
+<div class="container">
+
+  <h1>🌟 Good Time Journal</h1>
+
+  <form id="entryForm">
+
+    <label>Date</label>
+    <input
+      type="date"
+      id="entry_date"
+      required
+    >
+
+    <label>Activity</label>
+    <input
+      type="text"
+      id="activity"
+      placeholder="Cycling"
+      required
+    >
+
+    <label>Description</label>
+    <textarea
+      id="description"
+      rows="3"
+    ></textarea>
+
+    <label>Energy (1-5)</label>
+    <input
+      type="number"
+      id="energy"
+      min="1"
+      max="5"
+      required
+    >
+
+    <label>Engagement (1-5)</label>
+    <input
+      type="number"
+      id="engagement"
+      min="1"
+      max="5"
+      required
+    >
+
+    <label>Notes</label>
+    <textarea
+      id="notes"
+      rows="4"
+    ></textarea>
+
+    <button type="submit">
+      Save Entry
+    </button>
+
+  </form>
+
+  <hr>
+
+  <h2>Recent Entries</h2>
+
+  <div id="entries"></div>
+
+</div>
+
+<script src="js/api.js"></script>
+<script src="js/journal.js"></script>
+<script src="js/app.js"></script>
+
+</body>
+</html>
