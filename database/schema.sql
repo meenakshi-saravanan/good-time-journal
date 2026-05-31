@@ -6,8 +6,6 @@ CREATE TABLE IF NOT EXISTS journal_entries (
 
  activity TEXT NOT NULL,
 
- description TEXT,
-
  energy INTEGER,
 
  engagement INTEGER,

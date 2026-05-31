@@ -2,23 +2,60 @@ document.addEventListener(
   "DOMContentLoaded",
   () => {
 
-    document.getElementById(
-      "entry_date"
-    ).value =
-      new Date()
-        .toISOString()
-        .split("T")[0];
+    const entriesContainer =
+      document.getElementById("entries");
 
-    loadEntries();
+    if (entriesContainer) {
+      loadEntries();
+    }
 
-    document
-      .getElementById("entryForm")
-      .addEventListener(
+    const entryForm =
+      document.getElementById("entryForm");
+
+    if (entryForm) {
+      setDefaultEntryDate();
+
+      entryForm.addEventListener(
         "submit",
         submitForm
       );
+    }
+
+    const newEntryButton =
+      document.getElementById("newEntryButton");
+
+    if (newEntryButton) {
+      newEntryButton.addEventListener(
+        "click",
+        () => {
+          window.location.href = "/new-entry.html";
+        }
+      );
+    }
+
+    const backButton =
+      document.getElementById("backButton");
+
+    if (backButton) {
+      backButton.addEventListener(
+        "click",
+        () => {
+          window.location.href = "/";
+        }
+      );
+    }
   }
 );
+
+function setDefaultEntryDate() {
+
+  document.getElementById(
+    "entry_date"
+  ).value =
+    new Date()
+      .toISOString()
+      .split("T")[0];
+}
 
 async function loadEntries() {
 
@@ -38,9 +75,6 @@ async function submitForm(event) {
 
     activity:
       document.getElementById("activity").value,
-
-    description:
-      document.getElementById("description").value,
 
     energy:
       Number(
@@ -62,14 +96,8 @@ async function submitForm(event) {
     .getElementById("entryForm")
     .reset();
 
-  document.getElementById(
-    "entry_date"
-  ).value =
-    new Date()
-      .toISOString()
-      .split("T")[0];
-
-  loadEntries();
+  setDefaultEntryDate();
+  window.location.href = "/";
 }
 
 async function removeEntry(id) {

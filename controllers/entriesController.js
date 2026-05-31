@@ -6,7 +6,6 @@ function getEntries(req, res) {
       id,
       entry_date,
       activity,
-      description,
       energy,
       engagement,
       notes,
@@ -29,7 +28,6 @@ function createEntry(req, res) {
   const {
     entry_date,
     activity,
-    description = "",
     energy,
     engagement,
     notes = ""
@@ -46,12 +44,11 @@ function createEntry(req, res) {
     `INSERT INTO journal_entries (
       entry_date,
       activity,
-      description,
       energy,
       engagement,
       notes
-    ) VALUES (?, ?, ?, ?, ?, ?)`,
-    [entry_date, activity, description, energy, engagement, notes],
+    ) VALUES (?, ?, ?, ?, ?)`,
+    [entry_date, activity, energy, engagement, notes],
     function handleInsert(err) {
       if (err) {
         res.status(500).json({ error: "Unable to save journal entry." });
@@ -62,7 +59,6 @@ function createEntry(req, res) {
         id: this.lastID,
         entry_date,
         activity,
-        description,
         energy,
         engagement,
         notes
