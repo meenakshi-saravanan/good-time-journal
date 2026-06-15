@@ -9,6 +9,17 @@ async function fetchEntries() {
   return await response.json();
 }
 
+async function readJsonResponse(response, fallbackMessage) {
+  const contentType =
+    response.headers.get("content-type") || "";
+
+  if (contentType.includes("application/json")) {
+    return await response.json();
+  }
+
+  throw new Error(fallbackMessage);
+}
+
 async function fetchEntry(id) {
   const response = await fetch(`/api/journal/${id}`);
 
@@ -78,7 +89,11 @@ async function signupUser(user) {
     body: JSON.stringify(user)
   });
 
-  const result = await response.json();
+  const result =
+    await readJsonResponse(
+      response,
+      "Unable to create account. Please restart the server and try again."
+    );
 
   if (!response.ok) {
     throw new Error(result.error || "Unable to create account.");
@@ -96,7 +111,11 @@ async function loginUser(credentials) {
     body: JSON.stringify(credentials)
   });
 
-  const result = await response.json();
+  const result =
+    await readJsonResponse(
+      response,
+      "Unable to log in. Please restart the server and try again."
+    );
 
   if (!response.ok) {
     throw new Error(result.error || "Unable to log in.");
