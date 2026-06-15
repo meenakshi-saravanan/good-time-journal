@@ -1,20 +1,116 @@
 async function fetchEntries() {
   const response = await fetch("/api/journal");
+
+  if (response.status === 401) {
+    window.location.href = "/login.html";
+    return [];
+  }
+
   return await response.json();
 }
 
+async function fetchEntry(id) {
+  const response = await fetch(`/api/journal/${id}`);
+
+  if (response.ok) {
+    return await response.json();
+  }
+
+  const entries =
+    await fetchEntries();
+
+  const entry =
+    entries.find(
+      (item) => String(item.id) === String(id)
+    );
+
+  if (!entry) {
+    throw new Error("Unable to fetch journal entry.");
+  }
+
+  return entry;
+}
+
 async function saveEntry(entry) {
-  await fetch("/api/journal", {
+  const response = await fetch("/api/journal", {
     method: "POST",
     headers: {
       "Content-Type": "application/json"
     },
     body: JSON.stringify(entry)
   });
+
+  if (!response.ok) {
+    throw new Error("Unable to save journal entry.");
+  }
 }
 
 async function deleteEntry(id) {
-  await fetch(`/api/journal/${id}`, {
-    method: "DELETE"
+
+  const response =
+    await fetch(`/api/journal/${id}`, {
+      method: "DELETE"
+    });
+
+  if (!response.ok) {
+    throw new Error(
+      "Unable to delete journal entry."
+    );
+  }
+}
+
+async function getCurrentUser() {
+  const response = await fetch("/api/auth/me");
+
+  if (!response.ok) {
+    throw new Error("Authentication required.");
+  }
+
+  return await response.json();
+}
+
+async function signupUser(user) {
+  const response = await fetch("/api/auth/signup", {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json"
+    },
+    body: JSON.stringify(user)
   });
+
+  const result = await response.json();
+
+  if (!response.ok) {
+    throw new Error(result.error || "Unable to create account.");
+  }
+
+  return result;
+}
+
+async function loginUser(credentials) {
+  const response = await fetch("/api/auth/login", {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json"
+    },
+    body: JSON.stringify(credentials)
+  });
+
+  const result = await response.json();
+
+  if (!response.ok) {
+    throw new Error(result.error || "Unable to log in.");
+  }
+
+  return result;
+}
+
+async function logoutUser() {
+  const response = await fetch("/api/auth/logout", {
+    method: "POST"
+  });
+
+  if (!response.ok) {
+    throw new Error("Unable to log out.");
+  }
 }

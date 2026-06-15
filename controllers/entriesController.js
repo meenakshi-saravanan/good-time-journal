@@ -11,8 +11,9 @@ function getEntries(req, res) {
       notes,
       created_at
     FROM journal_entries
+    WHERE user_id = ?
     ORDER BY entry_date DESC, created_at DESC`,
-    [],
+    [req.session.userId],
     (err, rows) => {
       if (err) {
         res.status(500).json({ error: "Unable to fetch journal entries." });
@@ -20,6 +21,36 @@ function getEntries(req, res) {
       }
 
       res.json(rows);
+    }
+  );
+}
+
+function getEntry(req, res) {
+  db.get(
+    `SELECT
+      id,
+      entry_date,
+      activity,
+      energy,
+      engagement,
+      notes,
+      created_at
+    FROM journal_entries
+    WHERE id = ?
+      AND user_id = ?`,
+    [req.params.id, req.session.userId],
+    (err, row) => {
+      if (err) {
+        res.status(500).json({ error: "Unable to fetch journal entry." });
+        return;
+      }
+
+      if (!row) {
+        res.status(404).json({ error: "Journal entry not found." });
+        return;
+      }
+
+      res.json(row);
     }
   );
 }
@@ -42,13 +73,21 @@ function createEntry(req, res) {
 
   db.run(
     `INSERT INTO journal_entries (
+      user_id,
       entry_date,
       activity,
       energy,
       engagement,
       notes
-    ) VALUES (?, ?, ?, ?, ?)`,
-    [entry_date, activity, energy, engagement, notes],
+    ) VALUES (?, ?, ?, ?, ?, ?)`,
+    [
+      req.session.userId,
+      entry_date,
+      activity,
+      energy,
+      engagement,
+      notes
+    ],
     function handleInsert(err) {
       if (err) {
         res.status(500).json({ error: "Unable to save journal entry." });
@@ -57,6 +96,7 @@ function createEntry(req, res) {
 
       res.status(201).json({
         id: this.lastID,
+        user_id: req.session.userId,
         entry_date,
         activity,
         energy,
@@ -69,8 +109,10 @@ function createEntry(req, res) {
 
 function deleteEntry(req, res) {
   db.run(
-    "DELETE FROM journal_entries WHERE id = ?",
-    [req.params.id],
+    `DELETE FROM journal_entries
+    WHERE id = ?
+      AND user_id = ?`,
+    [req.params.id, req.session.userId],
     function handleDelete(err) {
       if (err) {
         res.status(500).json({ error: "Unable to delete journal entry." });
@@ -89,6 +131,7 @@ function deleteEntry(req, res) {
 
 module.exports = {
   getEntries,
+  getEntry,
   createEntry,
   deleteEntry
 };
