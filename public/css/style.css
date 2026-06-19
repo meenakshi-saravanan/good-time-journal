@@ -16,11 +16,20 @@
 
     body {
       margin: 0;
-       font-family: "Noto Sans", sans-serif;
+      font-family: "Noto Sans", sans-serif;
       background: #ffffff;
     }
 
- .auth-layout {
+.auth-signup .brand-panel 
+ {
+position: relative;
+      background-image: url("../assets/images/Sign-up-image.jpg");
+      background-size: cover;
+      background-position: center;
+      min-height: 100vh;
+ }
+ 
+    .auth-layout {
       min-height: 100vh;
     }
 
@@ -112,6 +121,9 @@
     .btn-primary {
       padding: 0.9rem;
       font-weight: 600;
+      background-color: #E7C1FE!important;
+      color: black;
+      border: none;
     }
 
     .google-btn {
