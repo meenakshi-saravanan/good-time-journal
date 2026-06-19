@@ -2,6 +2,149 @@
   background: #f4f6f8;
 }
 
+:root {
+  --bs-body-font-family: "Noto Sans", sans-serif;
+}
+
 .empty-state {
   color: #5f6b7a;
+}
+  html,
+    body {
+      height: 100%;
+    }
+
+    body {
+      margin: 0;
+       font-family: "Noto Sans", sans-serif;
+      background: #ffffff;
+    }
+
+ .auth-layout {
+      min-height: 100vh;
+    }
+
+    .brand-panel {
+      position: relative;
+      background-image: url("../assets/images/Login-image.png");
+      background-size: cover;
+      background-position: center;
+      min-height: 100vh;
+    }
+
+    .brand-panel::before {
+      content: "";
+      position: absolute;
+      inset: 0;
+      background: rgba(0, 0, 0, 0.35);
+    }
+
+    .brand-content {
+      position: relative;
+      z-index: 1;
+      color: white;
+      padding: 48px;
+      max-width: 500px;
+    }
+
+    .brand-logo-image {
+  width: 180px;
+  height: auto;
+}
+
+    .brand-tag {
+      letter-spacing: 2px;
+      font-size: 0.8rem;
+      opacity: 0.8;
+      margin-bottom: 3rem;
+    }
+
+    .brand-headline {
+      font-size: 2.5rem;
+      font-weight: 700;
+      line-height: 1.2;
+      margin-bottom: 1rem;
+    }
+
+    .brand-copy {
+      font-size: 1.1rem;
+      opacity: 0.9;
+      margin-bottom: 1.5rem;
+    }
+
+    .brand-pillars {
+      font-size: 1rem;
+      opacity: 0.85;
+    }
+
+    .auth-panel {
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 2rem;
+    }
+
+    .auth-container {
+      width: 100%;
+      max-width: 460px;
+    }
+
+    .auth-title {
+      font-weight: 700;
+      margin-bottom: 0.5rem;
+    }
+
+    .auth-subtitle {
+      color: #6c757d;
+      margin-bottom: 2rem;
+    }
+
+    .security-message {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      color: #6c757d;
+      font-size: 0.95rem;
+      margin-bottom: 2rem;
+    }
+
+    .btn-primary {
+      padding: 0.9rem;
+      font-weight: 600;
+    }
+
+    .google-btn {
+      padding: 0.9rem;
+      font-weight: 500;
+    }
+
+    @media (max-width: 991px) {
+      .brand-panel {
+        display: none;
+      }
+
+      .auth-panel {
+        min-height: 100vh;
+      }
+    }
+
+    body {
+  font-weight: 400;
+}
+
+.brand-logo {
+  font-weight: 700;
+}
+
+.brand-headline {
+  font-weight: 700;
+}
+
+.auth-title {
+  font-weight: 600;
+}
+
+.btn {
+  font-weight: 500;
 }

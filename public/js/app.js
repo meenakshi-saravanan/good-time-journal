@@ -217,6 +217,9 @@ async function submitSignupForm(event) {
 
 async function submitLoginForm(event) {
   event.preventDefault();
+
+  console.log("Login form submitted");
+
   clearAuthError();
 
   try {
@@ -227,9 +230,11 @@ async function submitLoginForm(event) {
 
     window.location.href = "/";
   } catch (error) {
+    console.error(error);
     renderAuthError(error.message);
   }
 }
+
 
 function clearAuthError() {
   const authError =
