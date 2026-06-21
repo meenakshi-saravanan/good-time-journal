@@ -1,5 +1,17 @@
 async function fetchEntries() {
-  const response = await fetch("/api/journal");
+  const params =
+    new URLSearchParams(window.location.search);
+
+  const journalId =
+    params.get("journal_id") ||
+    window.location.pathname.match(/^\/journals\/(\d+)/)?.[1];
+
+  const url =
+    journalId
+      ? `/api/journal?journal_id=${encodeURIComponent(journalId)}`
+      : "/api/journal";
+
+  const response = await fetch(url);
 
   if (response.status === 401) {
     window.location.href = "/login.html";
@@ -54,6 +66,71 @@ async function saveEntry(entry) {
   if (!response.ok) {
     throw new Error("Unable to save journal entry.");
   }
+}
+
+async function fetchJournals() {
+  const response = await fetch("/api/journals");
+
+  if (response.status === 401) {
+    window.location.href = "/login.html";
+    return [];
+  }
+
+  return await response.json();
+}
+
+async function fetchJournal(id) {
+  const response = await fetch(`/api/journals/${id}`);
+
+  if (!response.ok) {
+    throw new Error("Unable to fetch journal.");
+  }
+
+  return await response.json();
+}
+
+async function createJournalFromTemplate(journal) {
+  const response = await fetch("/api/journals/from-template", {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json"
+    },
+    body: JSON.stringify(journal)
+  });
+
+  const result =
+    await readJsonResponse(
+      response,
+      "Unable to create journal from template."
+    );
+
+  if (!response.ok) {
+    throw new Error(result.error || "Unable to create journal.");
+  }
+
+  return result;
+}
+
+async function createJournal(journal) {
+  const response = await fetch("/api/journals", {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json"
+    },
+    body: JSON.stringify(journal)
+  });
+
+  const result =
+    await readJsonResponse(
+      response,
+      "Unable to create journal."
+    );
+
+  if (!response.ok) {
+    throw new Error(result.error || "Unable to create journal.");
+  }
+
+  return result;
 }
 
 async function deleteEntry(id) {

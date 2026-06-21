@@ -20,9 +20,23 @@ app.use(express.static("public"));
 
 const journalRoutes = require("./routes/entries");
 const authRoutes = require("./routes/auth");
+const journalsRoutes = require("./routes/journals");
 
 app.use("/api/auth", authRoutes);
+app.use("/api/journals", journalsRoutes);
 app.use("/api/journal", journalRoutes);
+
+app.get("/templates", (req, res) => {
+  res.sendFile("templates.html", { root: "public" });
+});
+
+app.get("/journals/new", (req, res) => {
+  res.sendFile("new-journal.html", { root: "public" });
+});
+
+app.get("/journals/:id", (req, res) => {
+  res.sendFile("journal.html", { root: "public" });
+});
 
 const server = app.listen(PORT, HOST, () => {
   console.log(`Good Time Journal is running at http://${HOST}:${PORT}`);
