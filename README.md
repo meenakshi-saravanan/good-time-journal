@@ -1,44 +1,77 @@
-# 📓 Good Time Journal
+# 📖 Chapters Journal
 
-A simple journaling application that helps you discover which activities consistently generate the highest levels of energy and engagement.
+Capture your life as meaningful chapters instead of disconnected journal entries.
 
-Good Time Journal goes beyond traditional journaling by capturing not only what you did, but also how that activity made you feel. Over time, this creates a personal dataset that can help identify meaningful patterns and improve day-to-day decision making.
-
----
-
-## ✨ Highlights
-
-- Record daily activities and reflections
-- Rate Energy and Engagement on a 1–5 scale
-- View historical journal entries
-- Review detailed entry information
-- Delete entries you no longer need
-- Lightweight architecture with SQLite and Express
-- Beginner-friendly codebase
+Chapters Journal helps people document experiences, milestones, transitions, and personal growth over time. Rather than focusing on what happened today, Chapters Journal encourages reflection on the larger stories that shape a life.
 
 ---
 
-## 🚀 Why Good Time Journal?
+## ✨ Why Chapters Journal?
 
-Many journaling apps focus on writing.
+Most journaling apps are organized by dates.
 
-Good Time Journal focuses on understanding.
+Life is not remembered by dates.
 
-Instead of asking only:
+We remember:
 
-> What did I do today?
+- Starting a new job
+- Moving to a new city
+- Getting married
+- Becoming a parent
+- Learning a new skill
+- Building a business
+- Recovering from a difficult season
 
-Good Time Journal also asks:
+These are chapters.
 
-> Did this activity energize me?
->
-> Was I engaged while doing it?
-
-Over time, users can identify activities that consistently contribute to a better day and reduce time spent on activities that drain energy.
+Chapters Journal is designed around the idea that our lives are collections of meaningful chapters, each containing moments, reflections, lessons, and memories.
 
 ---
 
-## 🏗️ Architecture
+## 🚀 Core Concept
+
+Instead of asking:
+
+> What happened today?
+
+Chapters Journal asks:
+
+> What chapter of life are you currently living?
+
+Users can document experiences, reflect on growth, and preserve memories that matter.
+
+---
+
+## 🎯 Vision
+
+To become a personal timeline of life's most meaningful chapters.
+
+A place where users can:
+
+- Reflect on growth
+- Capture memories
+- Preserve lessons learned
+- Track meaningful experiences
+- Create a living story of their lives
+
+---
+
+## 🏗️ Current MVP
+
+The current version includes:
+
+- Create journal entries
+- View entries
+- Review entry details
+- Delete entries
+- SQLite database
+- Node.js + Express backend
+
+The MVP validates the journaling workflow before introducing chapter-based organization.
+
+---
+
+## 🛠 Technology Stack
 
 ### Frontend
 
@@ -55,87 +88,79 @@ Over time, users can identify activities that consistently contribute to a bette
 
 - SQLite
 
-### Application Flow
-
-Browser
-→ Frontend Pages
-→ API Calls
-→ Express Routes
-→ Controllers
-→ SQLite Database
-
 ---
 
-## 📂 Project Structure
+## 📸 Current Features
 
-```text
-server.js
-routes/
-controllers/
-database/
-public/
-├── css/
-├── js/
-├── index.html
-├── new-entry.html
-└── journal-entry.html
-
-docs/
-```
-
----
-
-## 📸 Features
-
-### Create Journal Entry
+### Create Entries
 
 Capture:
 
 - Date
 - Activity
-- Energy Rating
-- Engagement Rating
+- Energy
+- Engagement
 - Notes
 
-### View Journal Entries
+### Browse Entries
 
-Browse all entries in reverse chronological order.
+Review recent journal history.
 
-### Entry Detail View
+### Entry Details
 
-Review complete information for an individual journal entry.
+View complete information for a specific entry.
 
-### Delete Journal Entry
+### Delete Entries
 
-Remove entries that were created accidentally or are no longer useful.
+Remove entries that are no longer needed.
+
+---
+
+## 🗺 Product Roadmap
+
+### Phase 1 — Journal Foundation
+
+- Create entries
+- View entries
+- Delete entries
+- Entry detail page
+
+### Phase 2 — Accounts
+
+- User authentication
+- Login and signup
+- Session management
+- Personal journals
+
+### Phase 3 — Chapters
+
+- Create life chapters
+- Assign entries to chapters
+- Chapter timelines
+- Chapter summaries
+
+### Phase 4 — Reflection
+
+- Chapter insights
+- Lessons learned
+- Milestone tracking
+- Memory highlights
+
+### Phase 5 — AI Companion
+
+- AI-powered reflections
+- Chapter summaries
+- Personal growth insights
+- Memory resurfacing
 
 ---
 
 ## ⚡ Getting Started
 
-### Prerequisites
-
-- Node.js 18+
-- npm
-
-### Installation
-
-Clone the repository:
-
 ```bash
 git clone https://github.com/meenakshi-saravanan/good-time-journal.git
 cd good-time-journal
-```
-
-Install dependencies:
-
-```bash
 npm install
-```
-
-Start the application:
-
-```bash
 npm start
 ```
 
@@ -147,71 +172,9 @@ http://localhost:3000
 
 ---
 
-## 📡 API Endpoints
-
-| Method | Endpoint | Description |
-|----------|----------|----------|
-| GET | /api/journal | Get all journal entries |
-| GET | /api/journal/:id | Get a specific entry |
-| POST | /api/journal | Create a journal entry |
-| DELETE | /api/journal/:id | Delete a journal entry |
-
----
-
-## 🗄️ Database Schema
-
-### journal_entries
-
-| Column | Type |
-|----------|----------|
-| id | INTEGER |
-| entry_date | TEXT |
-| activity | TEXT |
-| energy | INTEGER |
-| engagement | INTEGER |
-| notes | TEXT |
-| created_at | DATETIME |
-
----
-
-## 🛣️ Roadmap
-
-### Phase 1
-
-- Journal CRUD
-- Entry detail page
-- Delete entries
-
-### Phase 2
-
-- User authentication
-- Login and signup
-- Session management
-- User-specific journals
-
-### Phase 3
-
-- Search and filtering
-- Edit journal entries
-- Analytics dashboard
-
-### Phase 4
-
-- Activity insights
-- Energy trends
-- Engagement trends
-
-### Phase 5
-
-- AI-generated reflections
-- Weekly summaries
-- Personalized recommendations
-
----
-
 ## 📚 Documentation
 
-Project documentation lives inside:
+Project documentation lives in:
 
 ```text
 docs/
@@ -226,24 +189,36 @@ Including:
 
 ---
 
-## 🤝 Contributing
+## 🌟 About the Project
 
-Contributions, ideas, feature requests, and feedback are welcome.
+Chapters Journal is an open-source project focused on helping people capture life's meaningful chapters, reflect on personal growth, and build a lasting record of their experiences.
 
-If you find a bug or have an improvement suggestion, please open an issue.
+Contributions, feedback, and feature suggestions are welcome.
 
 ---
 
-## 👨‍💻 Author
+## 🤝 Contributing
 
-Meenakshi Saravanan
+Ideas, feedback, bug reports, and pull requests are welcome.
 
-Senior UX Designer exploring product development, journaling systems, and AI-powered tools.
+If you have suggestions for improving the journaling experience or the chapter-based model, please open an issue.
 
 ---
 
 ## ⭐ Support
 
-If you find this project useful, consider giving the repository a star.
+If you find Chapters Journal useful:
 
-It helps others discover the project and supports future development.
+- Star the repository
+- Open feature requests
+- Report bugs
+- Share feedback
+- Contribute improvements
+
+Every contribution helps make Chapters Journal better.
+
+---
+
+People rarely remember their lives one day at a time.
+
+They remember them one chapter at a time.
