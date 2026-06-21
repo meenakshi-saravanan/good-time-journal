@@ -12,11 +12,33 @@ CREATE TABLE IF NOT EXISTS users (
 
 );
 
+CREATE TABLE IF NOT EXISTS journals (
+
+ id INTEGER PRIMARY KEY AUTOINCREMENT,
+
+ user_id INTEGER NOT NULL,
+
+ name TEXT NOT NULL,
+
+ template_type TEXT NOT NULL,
+
+ created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+
+ FOREIGN KEY(user_id) REFERENCES users(id)
+
+);
+
 CREATE TABLE IF NOT EXISTS journal_entries (
 
  id INTEGER PRIMARY KEY AUTOINCREMENT,
 
  user_id INTEGER NOT NULL,
+
+ journal_id INTEGER,
+
+ title TEXT,
+
+ content TEXT,
 
  entry_date TEXT NOT NULL,
 
@@ -30,6 +52,8 @@ CREATE TABLE IF NOT EXISTS journal_entries (
 
  created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
 
- FOREIGN KEY(user_id) REFERENCES users(id)
+ FOREIGN KEY(user_id) REFERENCES users(id),
+
+ FOREIGN KEY(journal_id) REFERENCES journals(id)
 
 );

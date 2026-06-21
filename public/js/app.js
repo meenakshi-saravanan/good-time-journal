@@ -18,10 +18,41 @@ document.addEventListener(
 
     renderAuthenticatedHeader(user);
 
+    const journalsContainer =
+      document.getElementById("journals");
+
+    if (journalsContainer) {
+      loadJournals();
+    }
+
+    const journalTitle =
+      document.getElementById("journalTitle");
+
+    if (journalTitle) {
+      loadJournalPage();
+    }
+
+    const templatesContainer =
+      document.getElementById("templates");
+
+    if (templatesContainer) {
+      setupTemplatesPage();
+    }
+
+    const journalForm =
+      document.getElementById("journalForm");
+
+    if (journalForm) {
+      journalForm.addEventListener(
+        "submit",
+        submitJournalForm
+      );
+    }
+
     const entriesContainer =
       document.getElementById("entries");
 
-    if (entriesContainer) {
+    if (entriesContainer && !journalTitle) {
       loadEntries();
     }
 
@@ -29,7 +60,16 @@ document.addEventListener(
       document.getElementById("entryForm");
 
     if (entryForm) {
-      setDefaultEntryDate();
+      const journalId =
+        getJournalIdFromUrl();
+
+      if (!journalId) {
+        window.location.href = "/";
+        return;
+      }
+
+      await setupEntryForm(journalId);
+      revealEntryForm();
 
       entryForm.addEventListener(
         "submit",
@@ -44,7 +84,15 @@ document.addEventListener(
       newEntryButton.addEventListener(
         "click",
         () => {
-          window.location.href = "/new-entry.html";
+          const journalId =
+            getJournalIdFromUrl();
+
+          const target =
+            journalId
+              ? `/new-entry.html?journal_id=${journalId}`
+              : "/new-entry.html";
+
+          window.location.href = target;
         }
       );
     }
@@ -56,7 +104,11 @@ document.addEventListener(
       backButton.addEventListener(
         "click",
         () => {
-          window.location.href = "/";
+          const journalId =
+            getJournalIdFromUrl();
+
+          window.location.href =
+            journalId ? `/journals/${journalId}` : "/";
         }
       );
     }
@@ -132,12 +184,172 @@ function setDefaultEntryDate() {
       .split("T")[0];
 }
 
+async function setupEntryForm(journalId) {
+  const journal =
+    await fetchJournal(journalId);
+
+  window.currentJournal = journal;
+
+  const formTitle =
+    document.getElementById("entryFormTitle");
+
+  if (formTitle) {
+    formTitle.textContent = `New Entry in ${journal.name}`;
+  }
+
+  const standardFields =
+    document.getElementById("standardEntryFields");
+
+  const goodTimeFields =
+    document.getElementById("goodTimeEntryFields");
+
+  const editorLabel =
+    document.getElementById("editorLabel");
+
+  if (journal.template_type === "good_time") {
+    if (standardFields) {
+      standardFields.classList.add("d-none");
+    }
+
+    if (goodTimeFields) {
+      goodTimeFields.classList.remove("d-none");
+    }
+
+    setEntryFieldsEnabled("standardEntryFields", false);
+    setEntryFieldsEnabled("goodTimeEntryFields", true);
+
+    if (editorLabel) {
+      editorLabel.textContent = "Journal Notes";
+    }
+
+    setDefaultEntryDate();
+    return;
+  }
+
+  if (standardFields) {
+    standardFields.classList.remove("d-none");
+  }
+
+  if (goodTimeFields) {
+    goodTimeFields.classList.add("d-none");
+  }
+
+  setEntryFieldsEnabled("goodTimeEntryFields", false);
+  setEntryFieldsEnabled("standardEntryFields", true);
+
+  if (editorLabel) {
+    editorLabel.textContent = "Content";
+  }
+}
+
+function setEntryFieldsEnabled(containerId, enabled) {
+  const container =
+    document.getElementById(containerId);
+
+  if (!container) {
+    return;
+  }
+
+  container
+    .querySelectorAll("input, textarea, select")
+    .forEach((field) => {
+      field.disabled = !enabled;
+
+      if (
+        field.id === "title" ||
+        field.id === "content" ||
+        field.id === "entry_date" ||
+        field.id === "activity" ||
+        field.id === "energy" ||
+        field.id === "engagement"
+      ) {
+        field.required = enabled;
+      }
+    });
+}
+
+function revealEntryForm() {
+  const loading =
+    document.getElementById("entryLoading");
+
+  if (loading) {
+    loading.remove();
+  }
+
+  const entryForm =
+    document.getElementById("entryForm");
+
+  if (entryForm) {
+    entryForm.classList.remove("d-none");
+  }
+}
+
 async function loadEntries() {
 
   const entries =
     await fetchEntries();
 
   renderEntries(entries);
+}
+
+async function loadJournals() {
+  const journals =
+    await fetchJournals();
+
+  renderJournals(journals);
+}
+
+async function loadJournalPage() {
+  const journalId =
+    getJournalIdFromUrl();
+
+  if (!journalId) {
+    window.location.href = "/";
+    return;
+  }
+
+  try {
+    const journal =
+      await fetchJournal(journalId);
+
+    window.currentJournal = journal;
+
+    document.getElementById("journalTitle").textContent =
+      journal.name;
+
+    const entries =
+      await fetchEntries();
+
+    const entryCount =
+      document.getElementById("journalEntryCount");
+
+    if (entryCount) {
+      entryCount.textContent =
+        `${entries.length} ${entries.length === 1 ? "Entry" : "Entries"}`;
+    }
+
+    renderEntries(entries);
+  } catch (error) {
+    document.getElementById("entries").innerHTML = `
+      <div class="alert alert-warning" role="alert">
+        Journal could not be found.
+      </div>
+    `;
+  }
+}
+
+function setupTemplatesPage() {
+  renderTemplates();
+
+  const useTemplateButton =
+    document.getElementById("useGoodTimeTemplateButton");
+
+  if (useTemplateButton) {
+    useTemplateButton.addEventListener(
+      "click",
+      useGoodTimeTemplate
+    );
+  }
 }
 
 async function loadEntryDetail() {
@@ -167,26 +379,44 @@ async function submitForm(event) {
 
   event.preventDefault();
 
-  const entry = {
-    entry_date:
-      document.getElementById("entry_date").value,
+  const journalId =
+    getJournalIdFromUrl();
 
-    activity:
-      document.getElementById("activity").value,
+  const isGoodTimeJournal =
+    window.currentJournal &&
+    window.currentJournal.template_type === "good_time";
 
-    energy:
-      Number(
-        document.getElementById("energy").value
-      ),
+  const entry =
+    isGoodTimeJournal
+      ? {
+        journal_id: journalId,
 
-    engagement:
-      Number(
-        document.getElementById("engagement").value
-      ),
+        entry_date:
+          document.getElementById("entry_date").value,
 
-    notes:
-      document.getElementById("notes").value
-  };
+        activity:
+          document.getElementById("activity").value,
+
+        energy:
+          Number(
+            document.getElementById("energy").value
+          ),
+
+        engagement:
+          Number(
+            document.getElementById("engagement").value
+          ),
+
+        notes:
+          getNotesEditorHtml()
+      }
+      : {
+        journal_id: journalId,
+        title:
+          document.getElementById("title").value,
+        content:
+          getNotesEditorHtml()
+      };
 
   await saveEntry(entry);
 
@@ -195,7 +425,98 @@ async function submitForm(event) {
     .reset();
 
   setDefaultEntryDate();
-  window.location.href = "/";
+
+  window.location.href =
+    journalId ? `/journals/${journalId}` : "/";
+}
+
+async function useGoodTimeTemplate() {
+  const errorContainer =
+    document.getElementById("templateError");
+
+  if (errorContainer) {
+    errorContainer.innerHTML = "";
+  }
+
+  const nameInput =
+    document.getElementById("templateJournalName");
+
+  const name =
+    nameInput ? nameInput.value.trim() : "";
+
+  if (!name) {
+    if (errorContainer) {
+      errorContainer.innerHTML = `
+        <div class="alert alert-danger" role="alert">
+          Journal name is required.
+        </div>
+      `;
+    }
+    return;
+  }
+
+  try {
+    const journal =
+      await createJournalFromTemplate({
+        name,
+        template_type: "good_time"
+      });
+
+    window.location.href = `/journals/${journal.id}`;
+  } catch (error) {
+    if (errorContainer) {
+      errorContainer.innerHTML = `
+        <div class="alert alert-danger" role="alert">
+          ${error.message}
+        </div>
+      `;
+    }
+  }
+}
+
+async function submitJournalForm(event) {
+  event.preventDefault();
+
+  const errorContainer =
+    document.getElementById("journalError");
+
+  if (errorContainer) {
+    errorContainer.innerHTML = "";
+  }
+
+  try {
+    const journal =
+      await createJournal({
+        name: document.getElementById("journalName").value
+      });
+
+    window.location.href = `/journals/${journal.id}`;
+  } catch (error) {
+    if (errorContainer) {
+      errorContainer.innerHTML = `
+        <div class="alert alert-danger" role="alert">
+          ${error.message}
+        </div>
+      `;
+    }
+  }
+}
+
+function getJournalIdFromUrl() {
+  const params =
+    new URLSearchParams(window.location.search);
+
+  const queryJournalId =
+    params.get("journal_id") || params.get("id");
+
+  if (queryJournalId) {
+    return queryJournalId;
+  }
+
+  const journalMatch =
+    window.location.pathname.match(/^\/journals\/(\d+)/);
+
+  return journalMatch ? journalMatch[1] : null;
 }
 
 async function submitSignupForm(event) {
@@ -213,6 +534,17 @@ async function submitSignupForm(event) {
   } catch (error) {
     renderAuthError(error.message);
   }
+}
+
+function getNotesEditorHtml() {
+  if (window.notesEditor) {
+    return window.notesEditor.getHTML();
+  }
+
+  const notes =
+    document.getElementById("notes");
+
+  return notes ? notes.value : "";
 }
 
 async function submitLoginForm(event) {
@@ -274,7 +606,11 @@ async function removeEntry(id) {
 
     await deleteEntry(id);
 
-    window.location.href = "/";
+    const journalId =
+      window.currentJournalId || getJournalIdFromUrl();
+
+    window.location.href =
+      journalId ? `/journals/${journalId}` : "/";
 
   } catch (error) {
 
