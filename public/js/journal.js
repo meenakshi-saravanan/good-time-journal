@@ -192,11 +192,11 @@ function renderJournalSidebar(journals) {
     ) {
       button.classList.add("active");
     }
-button.addEventListener("click", () => {
+    button.addEventListener("click", () => {
 
-    selectJournal(journal.id);
+      selectJournal(journal.id);
 
-});
+    });
 
     container.appendChild(button);
 
@@ -204,15 +204,15 @@ button.addEventListener("click", () => {
   const allEntriesButton =
     document.getElementById("allEntriesButton");
 
-if (allEntriesButton) {
+  if (allEntriesButton) {
 
     allEntriesButton.onclick = () => {
 
-        selectJournal("all");
+      selectJournal("all");
 
     };
 
-}
+  }
 
 
 }
@@ -321,78 +321,6 @@ function renderStars(value) {
   }
 
   return stars;
-}
-function renderEntryList(entries) {
-
-    const container =
-        document.getElementById("entryList");
-
-    if (!container) {
-        return;
-    }
-
-    container.innerHTML = "";
-
-    if (entries.length === 0) {
-
-        container.innerHTML = `
-            <div class="entry-empty">
-                No entries yet.
-            </div>
-        `;
-
-        return;
-
-    }
-
-    entries.forEach((entry) => {
-
-        const card =
-            document.createElement("div");
-
-        card.className =
-            "entry-card";
-
-        card.dataset.entryId =
-            entry.id;
-
-        card.innerHTML = `
-
-            <div class="entry-card-header">
-
-                <div class="entry-card-title">
-
-                    ${entry.title || "Untitled"}
-
-                </div>
-
-                <div class="entry-card-time">
-
-                    ${formatEntryTime(entry.updated_at)}
-
-                </div>
-
-            </div>
-
-            <div class="entry-card-preview">
-
-                ${entry.preview || ""}
-
-            </div>
-
-        `;
-
-        card.addEventListener("click", () => {
-
-            window.location.href =
-                `/journal-entry.html?id=${entry.id}`;
-
-        });
-
-        container.appendChild(card);
-
-    });
-
 }
 function renderEntryDetail(entry) {
   window.currentJournalId = entry.journal_id;
@@ -515,17 +443,90 @@ function formatEntryDate(dateValue) {
 
 function formatEntryTime(date) {
 
-    if (!date) {
-        return "";
+  if (!date) {
+    return "";
+  }
+
+  return new Date(date)
+    .toLocaleTimeString(
+      [],
+      {
+        hour: "2-digit",
+        minute: "2-digit"
+      }
+    );
+
+}
+function truncatePreview(text) {
+
+  if (!text) {
+    return "";
+  }
+
+  if (text.length <= 120) {
+    return text;
+  }
+
+  return text.substring(0, 120) + "...";
+
+}
+
+function renderEntryList(entries) {
+
+  const container =
+    document.getElementById("entryList");
+
+  if (!container) {
+    return;
+  }
+
+  container.innerHTML = "";
+
+  if (entries.length === 0) {
+
+    container.innerHTML = `
+            <div class="text-muted p-4">
+                No entries found.
+            </div>
+        `;
+
+    return;
+
+  }
+
+  entries.forEach((entry) => {
+
+    const item =
+      document.createElement("div");
+
+    item.className =
+      "entry-list-item";
+
+    // Highlight selected entry
+    if (appState.selectedEntryId === entry.id) {
+      item.classList.add("selected");
     }
 
-    return new Date(date)
-        .toLocaleTimeString(
-            [],
-            {
-                hour: "2-digit",
-                minute: "2-digit"
-            }
-        );
+    item.innerHTML = `
+            <div class="entry-card-top">
+                <div class="entry-list-title">
+                    ${entry.title || "Untitled"}
+                </div>
+                <div class="entry-list-time">
+                    ${formatEntryTime(entry.updated_at)}
+                </div>
+            </div>
+            <div class="entry-list-preview">
+                ${truncatePreview(entry.preview)}
+            </div>
+        `;
+
+    item.addEventListener("click", () => {
+      selectEntry(entry.id);
+    });
+
+    container.appendChild(item);
+
+  });
 
 }

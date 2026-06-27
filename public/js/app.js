@@ -1,54 +1,53 @@
 const appState = {
 
-    journals: [],
+  journals: [],
 
-    entries: [],
+  entries: [],
 
-    selectedJournalId: "all",
+  selectedJournalId: "all",
 
-    selectedEntryId: null
+  selectedEntryId: null
 
 };
 
 function getFilteredEntries() {
 
-    if (
-        appState.selectedJournalId === "all"
-    ) {
+  if (
+    appState.selectedJournalId === "all"
+  ) {
 
-        return appState.entries;
+    return appState.entries;
 
-    }
+  }
 
-    return appState.entries.filter(
-        (entry) =>
-            entry.journal_id ===
-            appState.selectedJournalId
-    );
+  return appState.entries.filter(
+    (entry) =>
+      entry.journal_id ===
+      appState.selectedJournalId
+  );
 
 }
 
 function selectJournal(journalId) {
 
-    appState.selectedJournalId = journalId;
+  appState.selectedJournalId = journalId;
 
-    document
-        .querySelectorAll(".sidebar-item")
-        .forEach((item) => {
-            item.classList.remove("active");
-        });
+  document
+    .querySelectorAll(".sidebar-item")
+    .forEach((item) => {
+      item.classList.remove("active");
+    });
 
-    const selectedButton =
-        document.querySelector(
-            `.sidebar-item[data-journal-id="${journalId}"]`
-        );
+  const selectedButton =
+    document.querySelector(
+      `.sidebar-item[data-journal-id="${journalId}"]`
+    );
 
-    if (selectedButton) {
-        selectedButton.classList.add("active");
-    }
+  if (selectedButton) {
+    selectedButton.classList.add("active");
+  }
 
-    // PR3:
-    // loadEntries();
+  renderEntryList(getFilteredEntries());
 
 }
 
@@ -73,14 +72,14 @@ document.addEventListener(
     renderAuthenticatedHeader(user);
 
     const journalsContainer =
-  document.getElementById("journals");
+      document.getElementById("journals");
 
-const journalSidebar =
-  document.getElementById("journalList");
+    const journalSidebar =
+      document.getElementById("journalList");
 
-if (journalsContainer || journalSidebar) {
-  loadJournals();
-}
+    if (journalsContainer || journalSidebar) {
+      loadJournals();
+    }
 
     const journalTitle =
       document.getElementById("journalTitle");
@@ -345,15 +344,15 @@ async function loadEntries() {
 
   const entries = await fetchEntries();
 
-const filteredEntries =
+  const filteredEntries =
     appState.selectedJournalId === "all"
-        ? entries
-        : entries.filter(
-            entry =>
-                entry.journal_id === appState.selectedJournalId
-        );
+      ? entries
+      : entries.filter(
+        entry =>
+          entry.journal_id === appState.selectedJournalId
+      );
 
-renderEntries(filteredEntries);
+  renderEntries(filteredEntries);
 }
 
 async function loadJournals() {
@@ -361,20 +360,24 @@ async function loadJournals() {
   const journals =
     await fetchJournals();
 
-const entries =
+  const entries =
     await fetchEntries();
 
-appState.journals =
+  appState.journals =
     journals;
 
-appState.entries =
+  appState.entries =
     entries;
 
-renderJournalSidebar(
-    appState.journals
-);
+  renderEntryList(
+    getFilteredEntries()
+  );
 
-console.log(appState.entries);
+  renderJournalSidebar(
+    appState.journals
+  );
+
+  console.log(appState.entries);
 
 }
 
@@ -407,7 +410,7 @@ async function loadJournalPage() {
         `${entries.length} ${entries.length === 1 ? "Entry" : "Entries"}`;
     }
 
-   renderEntryList(entries);
+    renderEntryList(entries);
   } catch (error) {
     document.getElementById("entries").innerHTML = `
       <div class="alert alert-warning" role="alert">
@@ -541,11 +544,11 @@ async function useGoodTimeTemplate() {
         template_type: "good_time"
       });
 
-appState.selectedJournalId = journal.id;
+    appState.selectedJournalId = journal.id;
 
-highlightActiveJournal();
+    highlightActiveJournal();
 
-loadEntries();
+    loadEntries();
   } catch (error) {
     if (errorContainer) {
       errorContainer.innerHTML = `
@@ -713,5 +716,58 @@ async function removeEntry(id) {
     }
 
   }
-  
+
+
+}
+
+async function selectEntry(entryId) {
+
+  appState.selectedEntryId = entryId;
+
+  renderEntryList(
+    getFilteredEntries()
+  );
+
+  const entry =
+    appState.entries.find(
+      entry => entry.id === entryId
+    );
+
+  renderEntryPreview(entry);
+
+}
+
+function renderEntryPreview(entry) {
+
+  console.log("Rendering preview for entry:", entry);
+
+  const container =
+    document.getElementById("entryPreview");
+
+  if (!container) {
+    return;
+  }
+
+  if (!entry) {
+    container.innerHTML = `
+            <div class="preview-placeholder">
+                <i class="bi bi-journal-text fs-1"></i>
+                <h3>Select an entry to preview</h3>
+            </div>
+        `;
+    return;
+  }
+
+  container.innerHTML = `
+        <div class="preview-content p-4">
+            <h2>${entry.title || "Untitled"}</h2>
+            <div class="text-muted mb-3">
+                ${formatEntryDate(entry.entry_date)}
+            </div>
+            <div class="entry-rich-text">
+                ${entry.content || entry.notes || entry.preview || ""}
+            </div>
+        </div>
+    `;
+
 }
