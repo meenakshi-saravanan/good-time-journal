@@ -158,6 +158,64 @@ function renderJournals(journals) {
 
   container.appendChild(grid);
 }
+function renderJournalSidebar(journals) {
+
+  const container =
+    document.getElementById("journalList");
+
+  if (!container) {
+    return;
+  }
+
+  container.innerHTML = "";
+
+  journals.forEach((journal) => {
+
+    const button =
+      document.createElement("button");
+
+    button.type = "button";
+
+    button.className =
+      "sidebar-item";
+
+    button.dataset.journalId =
+      journal.id;
+
+    button.innerHTML = `
+      <i class="bi bi-journal-text"></i>
+      <span>${journal.name}</span>
+    `;
+
+    if (
+      appState.selectedJournalId === journal.id
+    ) {
+      button.classList.add("active");
+    }
+button.addEventListener("click", () => {
+
+    selectJournal(journal.id);
+
+});
+
+    container.appendChild(button);
+
+  });
+  const allEntriesButton =
+    document.getElementById("allEntriesButton");
+
+if (allEntriesButton) {
+
+    allEntriesButton.onclick = () => {
+
+        selectJournal("all");
+
+    };
+
+}
+
+
+}
 
 function renderTemplates() {
   const container =
@@ -263,6 +321,78 @@ function renderStars(value) {
   }
 
   return stars;
+}
+function renderEntryList(entries) {
+
+    const container =
+        document.getElementById("entryList");
+
+    if (!container) {
+        return;
+    }
+
+    container.innerHTML = "";
+
+    if (entries.length === 0) {
+
+        container.innerHTML = `
+            <div class="entry-empty">
+                No entries yet.
+            </div>
+        `;
+
+        return;
+
+    }
+
+    entries.forEach((entry) => {
+
+        const card =
+            document.createElement("div");
+
+        card.className =
+            "entry-card";
+
+        card.dataset.entryId =
+            entry.id;
+
+        card.innerHTML = `
+
+            <div class="entry-card-header">
+
+                <div class="entry-card-title">
+
+                    ${entry.title || "Untitled"}
+
+                </div>
+
+                <div class="entry-card-time">
+
+                    ${formatEntryTime(entry.updated_at)}
+
+                </div>
+
+            </div>
+
+            <div class="entry-card-preview">
+
+                ${entry.preview || ""}
+
+            </div>
+
+        `;
+
+        card.addEventListener("click", () => {
+
+            window.location.href =
+                `/journal-entry.html?id=${entry.id}`;
+
+        });
+
+        container.appendChild(card);
+
+    });
+
 }
 function renderEntryDetail(entry) {
   window.currentJournalId = entry.journal_id;
@@ -381,4 +511,21 @@ function formatEntryDate(dateValue) {
         year: "numeric"
       }
     );
+}
+
+function formatEntryTime(date) {
+
+    if (!date) {
+        return "";
+    }
+
+    return new Date(date)
+        .toLocaleTimeString(
+            [],
+            {
+                hour: "2-digit",
+                minute: "2-digit"
+            }
+        );
+
 }

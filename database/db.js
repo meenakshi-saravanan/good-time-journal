@@ -31,21 +31,23 @@ db.serialize(() => {
   `);
 
   db.run(`
-    CREATE TABLE IF NOT EXISTS journal_entries (
-      id INTEGER PRIMARY KEY AUTOINCREMENT,
-      user_id INTEGER NOT NULL,
-      journal_id INTEGER,
-      title TEXT,
-      content TEXT,
-      entry_date TEXT NOT NULL,
-      activity TEXT NOT NULL,
-      energy INTEGER,
-      engagement INTEGER,
-      notes TEXT,
-      created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-      FOREIGN KEY(user_id) REFERENCES users(id),
-      FOREIGN KEY(journal_id) REFERENCES journals(id)
-    )
+CREATE TABLE IF NOT EXISTS journal_entries (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  user_id INTEGER NOT NULL,
+  journal_id INTEGER,
+  title TEXT,
+  preview TEXT,
+  content TEXT,
+  entry_date TEXT NOT NULL,
+  activity TEXT NOT NULL,
+  energy INTEGER,
+  engagement INTEGER,
+  notes TEXT,
+  created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+  updated_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+  FOREIGN KEY(user_id) REFERENCES users(id),
+  FOREIGN KEY(journal_id) REFERENCES journals(id)
+)
   `);
 
   db.all("PRAGMA table_info(journal_entries)", (err, columns) => {
@@ -54,61 +56,18 @@ db.serialize(() => {
       return;
     }
 
-    const hasUserId = columns.some((column) => column.name === "user_id");
-
-    if (!hasUserId) {
-      db.run(
-        "ALTER TABLE journal_entries ADD COLUMN user_id INTEGER",
-        (alterErr) => {
-          if (alterErr) {
-            console.error(alterErr.message);
-          }
-        }
-      );
-    }
-
-    const hasJournalId =
-      columns.some((column) => column.name === "journal_id");
-
-    if (!hasJournalId) {
-      db.run(
-        "ALTER TABLE journal_entries ADD COLUMN journal_id INTEGER",
-        (alterErr) => {
-          if (alterErr) {
-            console.error(alterErr.message);
-          }
-        }
-      );
-    }
-
-    const hasTitle =
-      columns.some((column) => column.name === "title");
-
-    if (!hasTitle) {
-      db.run(
-        "ALTER TABLE journal_entries ADD COLUMN title TEXT",
-        (alterErr) => {
-          if (alterErr) {
-            console.error(alterErr.message);
-          }
-        }
-      );
-    }
-
-    const hasContent =
-      columns.some((column) => column.name === "content");
-
-    if (!hasContent) {
-      db.run(
-        "ALTER TABLE journal_entries ADD COLUMN content TEXT",
-        (alterErr) => {
-          if (alterErr) {
-            console.error(alterErr.message);
-          }
-        }
-      );
-    }
+    ensureColumn(columns, "journal_entries", "journal_id", "INTEGER");
+    ensureColumn(columns, "journal_entries", "title", "TEXT");
+    ensureColumn(columns, "journal_entries", "preview", "TEXT");
+    ensureColumn(columns, "journal_entries", "content", "TEXT");
+    ensureColumn(
+      columns,
+      "journal_entries",
+      "updated_at",
+      "DATETIME DEFAULT CURRENT_TIMESTAMP"
+    );
   });
+
 
   db.all("PRAGMA index_list(journals)", (err, indexes) => {
     if (err) {
@@ -218,5 +177,23 @@ db.serialize(() => {
     }
   );
 });
+
+function ensureColumn(columns, tableName, columnName, definition) {
+  const hasColumn =
+    columns.some((column) => column.name === columnName);
+
+  if (hasColumn) {
+    return;
+  }
+
+  db.run(
+    `ALTER TABLE ${tableName} ADD COLUMN ${columnName} ${definition}`,
+    (err) => {
+      if (err) {
+        console.error(err.message);
+      }
+    }
+  );
+}
 
 module.exports = db;

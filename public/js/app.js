@@ -1,3 +1,57 @@
+const appState = {
+
+    journals: [],
+
+    entries: [],
+
+    selectedJournalId: "all",
+
+    selectedEntryId: null
+
+};
+
+function getFilteredEntries() {
+
+    if (
+        appState.selectedJournalId === "all"
+    ) {
+
+        return appState.entries;
+
+    }
+
+    return appState.entries.filter(
+        (entry) =>
+            entry.journal_id ===
+            appState.selectedJournalId
+    );
+
+}
+
+function selectJournal(journalId) {
+
+    appState.selectedJournalId = journalId;
+
+    document
+        .querySelectorAll(".sidebar-item")
+        .forEach((item) => {
+            item.classList.remove("active");
+        });
+
+    const selectedButton =
+        document.querySelector(
+            `.sidebar-item[data-journal-id="${journalId}"]`
+        );
+
+    if (selectedButton) {
+        selectedButton.classList.add("active");
+    }
+
+    // PR3:
+    // loadEntries();
+
+}
+
 document.addEventListener(
   "DOMContentLoaded",
   async () => {
@@ -19,11 +73,14 @@ document.addEventListener(
     renderAuthenticatedHeader(user);
 
     const journalsContainer =
-      document.getElementById("journals");
+  document.getElementById("journals");
 
-    if (journalsContainer) {
-      loadJournals();
-    }
+const journalSidebar =
+  document.getElementById("journalList");
+
+if (journalsContainer || journalSidebar) {
+  loadJournals();
+}
 
     const journalTitle =
       document.getElementById("journalTitle");
@@ -286,17 +343,39 @@ function revealEntryForm() {
 
 async function loadEntries() {
 
-  const entries =
-    await fetchEntries();
+  const entries = await fetchEntries();
 
-  renderEntries(entries);
+const filteredEntries =
+    appState.selectedJournalId === "all"
+        ? entries
+        : entries.filter(
+            entry =>
+                entry.journal_id === appState.selectedJournalId
+        );
+
+renderEntries(filteredEntries);
 }
 
 async function loadJournals() {
+
   const journals =
     await fetchJournals();
 
-  renderJournals(journals);
+const entries =
+    await fetchEntries();
+
+appState.journals =
+    journals;
+
+appState.entries =
+    entries;
+
+renderJournalSidebar(
+    appState.journals
+);
+
+console.log(appState.entries);
+
 }
 
 async function loadJournalPage() {
@@ -328,7 +407,7 @@ async function loadJournalPage() {
         `${entries.length} ${entries.length === 1 ? "Entry" : "Entries"}`;
     }
 
-    renderEntries(entries);
+   renderEntryList(entries);
   } catch (error) {
     document.getElementById("entries").innerHTML = `
       <div class="alert alert-warning" role="alert">
@@ -462,7 +541,11 @@ async function useGoodTimeTemplate() {
         template_type: "good_time"
       });
 
-    window.location.href = `/journals/${journal.id}`;
+appState.selectedJournalId = journal.id;
+
+highlightActiveJournal();
+
+loadEntries();
   } catch (error) {
     if (errorContainer) {
       errorContainer.innerHTML = `
@@ -630,4 +713,5 @@ async function removeEntry(id) {
     }
 
   }
+  
 }

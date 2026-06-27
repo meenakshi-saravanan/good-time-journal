@@ -1,59 +1,57 @@
-CREATE TABLE IF NOT EXISTS users (
+PRAGMA foreign_keys = ON;
 
- id INTEGER PRIMARY KEY AUTOINCREMENT,
-
- name TEXT NOT NULL,
-
- email TEXT NOT NULL UNIQUE,
-
- password_hash TEXT NOT NULL,
-
- created_at DATETIME DEFAULT CURRENT_TIMESTAMP
-
+CREATE TABLE users (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    name TEXT NOT NULL,
+    email TEXT NOT NULL UNIQUE,
+    password_hash TEXT NOT NULL,
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP
 );
 
-CREATE TABLE IF NOT EXISTS journals (
+CREATE TABLE journals (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    user_id INTEGER NOT NULL,
+    name TEXT NOT NULL,
+    template_type TEXT NOT NULL,
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
 
- id INTEGER PRIMARY KEY AUTOINCREMENT,
-
- user_id INTEGER NOT NULL,
-
- name TEXT NOT NULL,
-
- template_type TEXT NOT NULL,
-
- created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-
- FOREIGN KEY(user_id) REFERENCES users(id)
-
+    FOREIGN KEY(user_id)
+        REFERENCES users(id)
+        ON DELETE CASCADE
 );
 
-CREATE TABLE IF NOT EXISTS journal_entries (
+CREATE TABLE journal_entries (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
 
- id INTEGER PRIMARY KEY AUTOINCREMENT,
+    user_id INTEGER NOT NULL,
 
- user_id INTEGER NOT NULL,
+    journal_id INTEGER NOT NULL,
 
- journal_id INTEGER,
+    title TEXT,
 
- title TEXT,
+    preview TEXT,
 
- content TEXT,
+    content TEXT,
 
- entry_date TEXT NOT NULL,
+    entry_date TEXT NOT NULL,
 
- activity TEXT NOT NULL,
+    activity TEXT,
 
- energy INTEGER,
+    energy INTEGER,
 
- engagement INTEGER,
+    engagement INTEGER,
 
- notes TEXT,
+    notes TEXT,
 
- created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
 
- FOREIGN KEY(user_id) REFERENCES users(id),
+    updated_at DATETIME DEFAULT CURRENT_TIMESTAMP,
 
- FOREIGN KEY(journal_id) REFERENCES journals(id)
+    FOREIGN KEY(user_id)
+        REFERENCES users(id)
+        ON DELETE CASCADE,
 
+    FOREIGN KEY(journal_id)
+        REFERENCES journals(id)
+        ON DELETE CASCADE
 );

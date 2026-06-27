@@ -15,13 +15,15 @@ function getEntries(req, res) {
       id,
       journal_id,
       title,
+      preview,
       content,
       entry_date,
       activity,
       energy,
       engagement,
       notes,
-      created_at
+      created_at,
+      updated_at
     FROM journal_entries
     WHERE user_id = ?
       ${journalFilter}
@@ -44,13 +46,15 @@ function getEntry(req, res) {
       id,
       journal_id,
       title,
+      preview,
       content,
       entry_date,
       activity,
       energy,
       engagement,
       notes,
-      created_at
+      created_at,
+      updated_at
     FROM journal_entries
     WHERE id = ?
       AND user_id = ?`,
@@ -98,7 +102,8 @@ function createEntry(req, res) {
     [journal_id, req.session.userId],
     (journalErr, journal) => {
       if (journalErr) {
-        res.status(500).json({ error: "Unable to save journal entry." });
+        console.error(journalErr);
+        res.status(500).json({ error: journalErr.message });
         return;
       }
 
@@ -136,23 +141,31 @@ function createEntry(req, res) {
       const entryNotes =
         notes || content || "";
 
+      const entryContent =
+        content || null;
+
+      const preview =
+        createPreview(entryContent || entryNotes || entryActivity);
+
       db.run(
         `INSERT INTO journal_entries (
           user_id,
           journal_id,
           title,
+          preview,
           content,
           entry_date,
           activity,
           energy,
           engagement,
           notes
-        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
         [
           req.session.userId,
           journal_id,
           title || null,
-          content || null,
+          preview,
+          entryContent,
           entryDate,
           entryActivity,
           energy || null,
@@ -161,7 +174,8 @@ function createEntry(req, res) {
         ],
         function handleInsert(err) {
           if (err) {
-            res.status(500).json({ error: "Unable to save journal entry." });
+            console.error(err);
+            res.status(500).json({ error: err.message });
             return;
           }
 
@@ -170,12 +184,14 @@ function createEntry(req, res) {
             user_id: req.session.userId,
             journal_id,
             title: title || null,
-            content: content || null,
+            preview,
+            content: entryContent,
             entry_date: entryDate,
             activity: entryActivity,
             energy: energy || null,
             engagement: engagement || null,
-            notes: entryNotes
+            notes: entryNotes,
+            updated_at: new Date().toISOString()
           });
         }
       );
@@ -206,8 +222,16 @@ function deleteEntry(req, res) {
 }
 
 module.exports = {
-  getEntries,
-  getEntry,
-  createEntry,
-  deleteEntry
+    getEntries,
+    getEntry,
+    createEntry,
+    deleteEntry
 };
+
+function createPreview(value) {
+  return String(value || "")
+    .replace(/<[^>]*>/g, " ")
+    .replace(/\s+/g, " ")
+    .trim()
+    .slice(0, 160);
+}

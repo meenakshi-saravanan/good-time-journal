@@ -73,44 +73,104 @@
 
 
 
-  <main class="py-4 container" >
+<main class="chapters-layout">
 
+  <!-- Left Sidebar -->
+  <aside class="sidebar">
 
-  <div
-    class="d-flex flex-column flex-sm-row align-items-start align-items-sm-center justify-content-between gap-3 mb-4"
-  >
-    <h2 class="h4 mb-0">My Journals</h2>
+   <div class="sidebar-top">
 
-  <div class="d-flex align-items-center gap-3">
+   <button
+    id="allEntriesButton"
+    class="sidebar-item active"
+    data-journal-id="all">
 
-  <a
-    href="/templates"
-    class="
-    link-offset-2
-    link-underline
-    link-underline-opacity-0
-    "
-  >
-    Browse Templates
-  </a>
+    <i class="bi bi-journal-text"></i>
 
-<button
-  type="button"
-  class="btn btn-primary btn-sm"
-  data-bs-toggle="modal"
-  data-bs-target="#createJournalModal"
->
-  New Journal
+    <span>All Entries</span>
+
 </button>
+    <div class="sidebar-section-title">
+        My Journals
+    </div>
+
+    <div id="journalList"></div>
 
 </div>
-  </div>
 
-  <div id="journals"></div>
+    <div class="sidebar-bottom">
 
-  <div class="mt-4">
-  
-  </div>
+      <button class="sidebar-item">
+        <i class="bi bi-gear"></i>
+        <span>Settings</span>
+      </button>
+
+      <button class="sidebar-item">
+        <i class="bi bi-question-circle"></i>
+        <span>Help</span>
+      </button>
+
+    </div>
+
+  </aside>
+
+
+
+  <!-- Journal List -->
+
+<section class="journal-list-panel">
+
+    <div class="entry-list-header">
+
+        <div
+            id="entryListTitle"
+            class="entry-list-title"
+        >
+            ALL ENTRIES
+        </div>
+
+    </div>
+
+    <div class="entry-search">
+
+        <i class="bi bi-search"></i>
+
+        <input
+            id="entrySearch"
+            type="text"
+            placeholder="Search entries"
+        >
+
+    </div>
+
+    <div
+        id="entryList"
+        class="entry-list"
+    ></div>
+
+</section>
+
+
+
+  <!-- Preview Panel -->
+
+  <section class="preview-panel">
+
+    <div class="preview-placeholder">
+
+      <i class="bi bi-journal-richtext display-3 text-secondary"></i>
+
+      <h3 class="mt-4">
+        Select a journal
+      </h3>
+
+      <p class="text-muted mb-0">
+        Choose a journal from the list to begin reading or editing.
+      </p>
+
+    </div>
+
+  </section>
 
 </main>
 
