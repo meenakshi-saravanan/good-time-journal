@@ -158,6 +158,64 @@ function renderJournals(journals) {
 
   container.appendChild(grid);
 }
+function renderJournalSidebar(journals) {
+
+  const container =
+    document.getElementById("journalList");
+
+  if (!container) {
+    return;
+  }
+
+  container.innerHTML = "";
+
+  journals.forEach((journal) => {
+
+    const button =
+      document.createElement("button");
+
+    button.type = "button";
+
+    button.className =
+      "sidebar-item";
+
+    button.dataset.journalId =
+      journal.id;
+
+    button.innerHTML = `
+      <i class="bi bi-journal-text"></i>
+      <span>${journal.name}</span>
+    `;
+
+    if (
+      appState.selectedJournalId === journal.id
+    ) {
+      button.classList.add("active");
+    }
+    button.addEventListener("click", () => {
+
+      selectJournal(journal.id);
+
+    });
+
+    container.appendChild(button);
+
+  });
+  const allEntriesButton =
+    document.getElementById("allEntriesButton");
+
+  if (allEntriesButton) {
+
+    allEntriesButton.onclick = () => {
+
+      selectJournal("all");
+
+    };
+
+  }
+
+
+}
 
 function renderTemplates() {
   const container =
@@ -381,4 +439,94 @@ function formatEntryDate(dateValue) {
         year: "numeric"
       }
     );
+}
+
+function formatEntryTime(date) {
+
+  if (!date) {
+    return "";
+  }
+
+  return new Date(date)
+    .toLocaleTimeString(
+      [],
+      {
+        hour: "2-digit",
+        minute: "2-digit"
+      }
+    );
+
+}
+function truncatePreview(text) {
+
+  if (!text) {
+    return "";
+  }
+
+  if (text.length <= 120) {
+    return text;
+  }
+
+  return text.substring(0, 120) + "...";
+
+}
+
+function renderEntryList(entries) {
+
+  const container =
+    document.getElementById("entryList");
+
+  if (!container) {
+    return;
+  }
+
+  container.innerHTML = "";
+
+  if (entries.length === 0) {
+
+    container.innerHTML = `
+            <div class="text-muted p-4">
+                No entries found.
+            </div>
+        `;
+
+    return;
+
+  }
+
+  entries.forEach((entry) => {
+
+    const item =
+      document.createElement("div");
+
+    item.className =
+      "entry-list-item";
+
+    // Highlight selected entry
+    if (appState.selectedEntryId === entry.id) {
+      item.classList.add("selected");
+    }
+
+    item.innerHTML = `
+            <div class="entry-card-top">
+                <div class="entry-list-title">
+                    ${entry.title || "Untitled"}
+                </div>
+                <div class="entry-list-time">
+                    ${formatEntryTime(entry.updated_at)}
+                </div>
+            </div>
+            <div class="entry-list-preview">
+                ${truncatePreview(entry.preview)}
+            </div>
+        `;
+
+    item.addEventListener("click", () => {
+      selectEntry(entry.id);
+    });
+
+    container.appendChild(item);
+
+  });
+
 }

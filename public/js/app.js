@@ -1,3 +1,56 @@
+const appState = {
+
+  journals: [],
+
+  entries: [],
+
+  selectedJournalId: "all",
+
+  selectedEntryId: null
+
+};
+
+function getFilteredEntries() {
+
+  if (
+    appState.selectedJournalId === "all"
+  ) {
+
+    return appState.entries;
+
+  }
+
+  return appState.entries.filter(
+    (entry) =>
+      entry.journal_id ===
+      appState.selectedJournalId
+  );
+
+}
+
+function selectJournal(journalId) {
+
+  appState.selectedJournalId = journalId;
+
+  document
+    .querySelectorAll(".sidebar-item")
+    .forEach((item) => {
+      item.classList.remove("active");
+    });
+
+  const selectedButton =
+    document.querySelector(
+      `.sidebar-item[data-journal-id="${journalId}"]`
+    );
+
+  if (selectedButton) {
+    selectedButton.classList.add("active");
+  }
+
+  renderEntryList(getFilteredEntries());
+
+}
+
 document.addEventListener(
   "DOMContentLoaded",
   async () => {
@@ -21,7 +74,10 @@ document.addEventListener(
     const journalsContainer =
       document.getElementById("journals");
 
-    if (journalsContainer) {
+    const journalSidebar =
+      document.getElementById("journalList");
+
+    if (journalsContainer || journalSidebar) {
       loadJournals();
     }
 
@@ -286,17 +342,43 @@ function revealEntryForm() {
 
 async function loadEntries() {
 
-  const entries =
-    await fetchEntries();
+  const entries = await fetchEntries();
 
-  renderEntries(entries);
+  const filteredEntries =
+    appState.selectedJournalId === "all"
+      ? entries
+      : entries.filter(
+        entry =>
+          entry.journal_id === appState.selectedJournalId
+      );
+
+  renderEntries(filteredEntries);
 }
 
 async function loadJournals() {
+
   const journals =
     await fetchJournals();
 
-  renderJournals(journals);
+  const entries =
+    await fetchEntries();
+
+  appState.journals =
+    journals;
+
+  appState.entries =
+    entries;
+
+  renderEntryList(
+    getFilteredEntries()
+  );
+
+  renderJournalSidebar(
+    appState.journals
+  );
+
+  console.log(appState.entries);
+
 }
 
 async function loadJournalPage() {
@@ -328,7 +410,7 @@ async function loadJournalPage() {
         `${entries.length} ${entries.length === 1 ? "Entry" : "Entries"}`;
     }
 
-    renderEntries(entries);
+    renderEntryList(entries);
   } catch (error) {
     document.getElementById("entries").innerHTML = `
       <div class="alert alert-warning" role="alert">
@@ -462,7 +544,11 @@ async function useGoodTimeTemplate() {
         template_type: "good_time"
       });
 
-    window.location.href = `/journals/${journal.id}`;
+    appState.selectedJournalId = journal.id;
+
+    highlightActiveJournal();
+
+    loadEntries();
   } catch (error) {
     if (errorContainer) {
       errorContainer.innerHTML = `
@@ -630,4 +716,58 @@ async function removeEntry(id) {
     }
 
   }
+
+
+}
+
+async function selectEntry(entryId) {
+
+  appState.selectedEntryId = entryId;
+
+  renderEntryList(
+    getFilteredEntries()
+  );
+
+  const entry =
+    appState.entries.find(
+      entry => entry.id === entryId
+    );
+
+  renderEntryPreview(entry);
+
+}
+
+function renderEntryPreview(entry) {
+
+  console.log("Rendering preview for entry:", entry);
+
+  const container =
+    document.getElementById("entryPreview");
+
+  if (!container) {
+    return;
+  }
+
+  if (!entry) {
+    container.innerHTML = `
+            <div class="preview-placeholder">
+                <i class="bi bi-journal-text fs-1"></i>
+                <h3>Select an entry to preview</h3>
+            </div>
+        `;
+    return;
+  }
+
+  container.innerHTML = `
+        <div class="preview-content p-4">
+            <h2>${entry.title || "Untitled"}</h2>
+            <div class="text-muted mb-3">
+                ${formatEntryDate(entry.entry_date)}
+            </div>
+            <div class="entry-rich-text">
+                ${entry.content || entry.notes || entry.preview || ""}
+            </div>
+        </div>
+    `;
+
 }

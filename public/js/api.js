@@ -1,24 +1,16 @@
 async function fetchEntries() {
-  const params =
-    new URLSearchParams(window.location.search);
 
-  const journalId =
-    params.get("journal_id") ||
-    window.location.pathname.match(/^\/journals\/(\d+)/)?.[1];
+    const response =
+        await fetch("/api/journal");
 
-  const url =
-    journalId
-      ? `/api/journal?journal_id=${encodeURIComponent(journalId)}`
-      : "/api/journal";
+    if (!response.ok) {
+        throw new Error(
+            "Unable to fetch entries."
+        );
+    }
 
-  const response = await fetch(url);
+    return await response.json();
 
-  if (response.status === 401) {
-    window.location.href = "/login.html";
-    return [];
-  }
-
-  return await response.json();
 }
 
 async function readJsonResponse(response, fallbackMessage) {
@@ -64,7 +56,10 @@ async function saveEntry(entry) {
   });
 
   if (!response.ok) {
-    throw new Error("Unable to save journal entry.");
+    const error = await response.text();
+
+    console.error(error);
+    throw new Error(error);
   }
 }
 
