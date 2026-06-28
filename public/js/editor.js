@@ -9,7 +9,11 @@ import Placeholder from "https://esm.sh/@tiptap/extension-placeholder@3.27.1";
 const editorElement =
   document.querySelector("#editor");
 
+let autosaveTimer = null;
+let lastSavedContent = "";
+
 window.notesEditor = null;
+
 
 if (editorElement) {
   window.notesEditor = new Editor({
@@ -62,12 +66,40 @@ const {
     title,
     preview
 } = extractEntryMetadata(html);
+
+console.log(typeof updateEntry);
 const currentEntry =
     window.appState.entries.find(
         entry =>
             entry.id ===
             window.appState.selectedEntryId
     );
+    clearTimeout(autosaveTimer);
+
+autosaveTimer = setTimeout(async () => {
+ if (html === lastSavedContent) {
+        return;
+    }
+    try {
+
+        await updateEntry(
+            currentEntry.id,
+            {
+                title,
+                preview,
+                content: html
+            }
+        );
+
+        console.log("✅ Entry saved");
+
+    } catch (error) {
+
+        console.error(error);
+
+    }
+
+}, 1000);
 
 if (!currentEntry) {
     return;
@@ -108,7 +140,7 @@ function runEditorCommand(command) {
 
   const chain =
     window.notesEditor.chain().focus();
-
+lastSavedContent = window.notesEditor.getHTML();
   if (command === "heading") {
     chain.toggleHeading({ level: 2 }).run();
     return;
