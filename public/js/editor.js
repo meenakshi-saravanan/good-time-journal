@@ -14,7 +14,7 @@ window.notesEditor = null;
 if (editorElement) {
   window.notesEditor = new Editor({
     element: editorElement,
-
+    editable: true,
     extensions: [
       StarterKit.configure({
         codeBlock: false
@@ -50,8 +50,39 @@ onSelectionUpdate: ({ editor }) => {
   updateToolbar();
 },
 
-onUpdate: () => {
-  updateToolbar();
+onUpdate: ({ editor }) => {
+
+    updateToolbar();
+if (!window.appState?.selectedEntryId) {
+    return;
+}
+const html = editor.getHTML();
+
+const {
+    title,
+    preview
+} = extractEntryMetadata(html);
+const currentEntry =
+    window.appState.entries.find(
+        entry =>
+            entry.id ===
+            window.appState.selectedEntryId
+    );
+
+if (!currentEntry) {
+    return;
+}
+
+currentEntry.title = title;
+currentEntry.preview = preview;
+currentEntry.content = html;
+
+window.renderEntryList(
+    window.getFilteredEntries()
+);
+
+
+
 },
 
 editorProps: {
@@ -709,7 +740,49 @@ document
   
 
   }
-  
+
 );
+
+function extractEntryMetadata(html) {
+
+    const temp =
+        document.createElement("div");
+
+    temp.innerHTML = html;
+
+    const blocks =
+        Array.from(temp.children);
+
+    let title = "Untitled";
+
+    let preview = "";
+
+    if (blocks.length > 0) {
+
+        title =
+            blocks[0].textContent.trim() || "Untitled";
+
+        preview =
+            blocks
+                .slice(1)
+                .map(block => block.textContent.trim())
+                .filter(text => text.length > 0)
+                .join(" ");
+                if (preview.length > 100) {
+
+    preview =
+        preview.substring(0, 100).trim() + "...";
+
+}
+
+    }
+
+    return {
+        title,
+        preview
+    };
+
+}
+
 
   

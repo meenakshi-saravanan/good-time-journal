@@ -860,6 +860,10 @@ position: relative;
 
     color: #202124;
 
+    max-height: calc(1.4em * 2);
+
+    overflow: hidden;
+
 }
 
 .entry-list-time {
@@ -970,3 +974,71 @@ position: relative;
 
 }
 
+.sidebar-heading-row {
+
+    display: flex;
+
+    justify-content: space-between;
+
+    align-items: center;
+
+    padding: 0 16px;
+
+    margin-bottom: 12px;
+
+}
+
+.sidebar-add-button {
+
+    width: 32px;
+
+    height: 32px;
+
+    border: none;
+
+    border-radius: 8px;
+
+    background: transparent;
+
+    display: flex;
+
+    align-items: center;
+
+    justify-content: center;
+
+    cursor: pointer;
+
+    transition: background .15s ease;
+
+}
+
+.sidebar-add-button:hover {
+
+    background: #F3F4F6;
+
+}
+
+.editor-title {
+
+    font-size: 18px;
+
+    font-weight: 600;
+
+    color: #111827;
+
+    line-height: 1.2;
+
+    
+
+
+}
+
+.editor-date {
+
+    font-size: 13px;
+
+    color: #6B7280;
+
+    margin-top: 2px;
+
+}

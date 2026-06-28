@@ -76,6 +76,8 @@ function getEntry(req, res) {
 }
 
 function createEntry(req, res) {
+    console.log("✅ NEW createEntry() is running");
+  console.log(req.body);
   const {
     journal_id,
     title,
@@ -125,12 +127,7 @@ function createEntry(req, res) {
         return;
       }
 
-      if (!isGoodTimeJournal && (!title || !content)) {
-        res.status(400).json({
-          error: "Title and content are required."
-        });
-        return;
-      }
+    
 
       const entryDate =
         entry_date || new Date().toISOString().split("T")[0];

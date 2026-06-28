@@ -10,6 +10,8 @@ const appState = {
 
 };
 
+window.appState = appState;
+
 function getFilteredEntries() {
 
   if (
@@ -27,6 +29,7 @@ function getFilteredEntries() {
   );
 
 }
+window.getFilteredEntries = getFilteredEntries;
 
 function selectJournal(journalId) {
 
@@ -80,7 +83,26 @@ document.addEventListener(
     if (journalsContainer || journalSidebar) {
       loadJournals();
     }
+    const createJournalButton =
+    document.getElementById("createJournalButton");
 
+if (createJournalButton) {
+
+    createJournalButton.addEventListener(
+        "click",
+        () => {
+
+            const modal =
+                new bootstrap.Modal(
+                    document.getElementById("createJournalModal")
+                );
+
+            modal.show();
+
+        }
+    );
+
+}
     const journalTitle =
       document.getElementById("journalTitle");
 
@@ -175,6 +197,58 @@ document.addEventListener(
     if (entryDetail) {
       loadEntryDetail();
     }
+
+    const editorNewButton =
+  document.getElementById("editorNewButton");
+
+if (editorNewButton) {
+
+editorNewButton.addEventListener(
+  "click",
+  async () => {
+
+    try {
+
+      const today =
+        new Date()
+          .toISOString()
+          .split("T")[0];
+
+      const entry =
+        await saveEntry({
+
+          journal_id: appState.selectedJournalId,
+
+          title: "Untitled",
+
+          content: "<p></p>",
+
+          entry_date: today
+
+        });
+
+      appState.entries.unshift(entry);
+
+renderEntryList(
+    getFilteredEntries()
+);
+
+selectEntry(entry.id);
+
+    }
+
+    catch (error) {
+
+      console.error(error);
+
+      alert(error.message);
+
+    }
+
+  }
+);
+
+}
   }
 );
 
@@ -418,6 +492,7 @@ async function loadJournalPage() {
       </div>
     `;
   }
+  window.renderEntryList = renderEntryList;
 }
 
 function setupTemplatesPage() {
@@ -576,7 +651,19 @@ async function submitJournalForm(event) {
         name: document.getElementById("journalName").value
       });
 
-    window.location.href = `/journals/${journal.id}`;
+    appState.selectedJournalId = journal.id;
+
+await loadJournals();
+
+selectJournal(journal.id);
+
+document.getElementById("journalForm").reset();
+
+bootstrap.Modal
+  .getInstance(
+    document.getElementById("createJournalModal")
+  )
+  .hide();
   } catch (error) {
     if (errorContainer) {
       errorContainer.innerHTML = `
@@ -732,42 +819,40 @@ async function selectEntry(entryId) {
     appState.entries.find(
       entry => entry.id === entryId
     );
+    console.log(entry);
 
-  renderEntryPreview(entry);
+ loadEntryIntoEditor(entry);
 
 }
+window.selectEntry = selectEntry;
 
-function renderEntryPreview(entry) {
+function loadEntryIntoEditor(entry) {
 
-  console.log("Rendering preview for entry:", entry);
+    if (!entry) {
 
-  const container =
-    document.getElementById("entryPreview");
+        document.getElementById("editorDate").textContent = "";
 
-  if (!container) {
-    return;
-  }
+        if (window.notesEditor) {
 
-  if (!entry) {
-    container.innerHTML = `
-            <div class="preview-placeholder">
-                <i class="bi bi-journal-text fs-1"></i>
-                <h3>Select an entry to preview</h3>
-            </div>
-        `;
-    return;
-  }
+            window.notesEditor.commands.clearContent();
 
-  container.innerHTML = `
-        <div class="preview-content p-4">
-            <h2>${entry.title || "Untitled"}</h2>
-            <div class="text-muted mb-3">
-                ${formatEntryDate(entry.entry_date)}
-            </div>
-            <div class="entry-rich-text">
-                ${entry.content || entry.notes || entry.preview || ""}
-            </div>
-        </div>
-    `;
+        }
+
+        return;
+
+    }
+
+    document.getElementById("editorDate").textContent =
+        formatEntryDate(entry.entry_date);
+
+    if (window.notesEditor) {
+
+        window.notesEditor.commands.setContent(
+            entry.content || "<p></p>"
+        );
+
+        window.notesEditor.commands.focus("start");
+
+    }
 
 }
