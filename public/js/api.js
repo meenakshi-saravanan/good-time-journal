@@ -47,20 +47,64 @@ async function fetchEntry(id) {
 }
 
 async function saveEntry(entry) {
-  const response = await fetch("/api/journal", {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json"
-    },
-    body: JSON.stringify(entry)
-  });
+
+  const response =
+    await fetch("/api/journal", {
+
+      method: "POST",
+
+      headers: {
+        "Content-Type": "application/json"
+      },
+
+      body: JSON.stringify(entry)
+
+    });
 
   if (!response.ok) {
-    const error = await response.text();
+
+    const error =
+      await response.text();
 
     console.error(error);
+
     throw new Error(error);
+
   }
+
+  return await response.json();
+
+}
+
+async function updateEntry(id, entry) {
+
+    const response =
+        await fetch(`/api/journal/${id}`, {
+
+            method: "PUT",
+
+            headers: {
+                "Content-Type": "application/json"
+            },
+
+            body: JSON.stringify(entry)
+
+        });
+
+ if (response.status === 401) {
+
+    window.location.href = "/login.html";
+    return;
+
+}
+
+if (!response.ok) {
+
+    throw new Error("Unable to update entry.");
+
+}
+    return await response.json();
+
 }
 
 async function fetchJournals() {

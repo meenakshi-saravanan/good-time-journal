@@ -9,12 +9,16 @@ import Placeholder from "https://esm.sh/@tiptap/extension-placeholder@3.27.1";
 const editorElement =
   document.querySelector("#editor");
 
+let autosaveTimer = null;
+let lastSavedContent = "";
+
 window.notesEditor = null;
+
 
 if (editorElement) {
   window.notesEditor = new Editor({
     element: editorElement,
-
+    editable: true,
     extensions: [
       StarterKit.configure({
         codeBlock: false
@@ -50,8 +54,67 @@ onSelectionUpdate: ({ editor }) => {
   updateToolbar();
 },
 
-onUpdate: () => {
-  updateToolbar();
+onUpdate: ({ editor }) => {
+
+    updateToolbar();
+if (!window.appState?.selectedEntryId) {
+    return;
+}
+const html = editor.getHTML();
+
+const {
+    title,
+    preview
+} = extractEntryMetadata(html);
+
+console.log(typeof updateEntry);
+const currentEntry =
+    window.appState.entries.find(
+        entry =>
+            entry.id ===
+            window.appState.selectedEntryId
+    );
+    clearTimeout(autosaveTimer);
+
+autosaveTimer = setTimeout(async () => {
+ if (html === lastSavedContent) {
+        return;
+    }
+    try {
+
+        await updateEntry(
+            currentEntry.id,
+            {
+                title,
+                preview,
+                content: html
+            }
+        );
+
+        console.log("✅ Entry saved");
+
+    } catch (error) {
+
+        console.error(error);
+
+    }
+
+}, 1000);
+
+if (!currentEntry) {
+    return;
+}
+
+currentEntry.title = title;
+currentEntry.preview = preview;
+currentEntry.content = html;
+
+window.renderEntryList(
+    window.getFilteredEntries()
+);
+
+
+
 },
 
 editorProps: {
@@ -77,7 +140,7 @@ function runEditorCommand(command) {
 
   const chain =
     window.notesEditor.chain().focus();
-
+lastSavedContent = window.notesEditor.getHTML();
   if (command === "heading") {
     chain.toggleHeading({ level: 2 }).run();
     return;
@@ -709,7 +772,49 @@ document
   
 
   }
-  
+
 );
+
+function extractEntryMetadata(html) {
+
+    const temp =
+        document.createElement("div");
+
+    temp.innerHTML = html;
+
+    const blocks =
+        Array.from(temp.children);
+
+    let title = "Untitled";
+
+    let preview = "";
+
+    if (blocks.length > 0) {
+
+        title =
+            blocks[0].textContent.trim() || "Untitled";
+
+        preview =
+            blocks
+                .slice(1)
+                .map(block => block.textContent.trim())
+                .filter(text => text.length > 0)
+                .join(" ");
+                if (preview.length > 100) {
+
+    preview =
+        preview.substring(0, 100).trim() + "...";
+
+}
+
+    }
+
+    return {
+        title,
+        preview
+    };
+
+}
+
 
   

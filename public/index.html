@@ -40,9 +40,22 @@
 <i class="bi bi-journal-text"></i>
 <span>All Entries</span>
 </button>
-<div class="sidebar-section-title">
+<div class="sidebar-heading-row">
+
+    <h6 class="sidebar-heading mb-0">
         My Journals
-    </div>
+    </h6>
+
+    <button
+        id="createJournalButton"
+        class="sidebar-add-button"
+        type="button">
+
+        <i class="bi bi-plus-lg"></i>
+
+    </button>
+
+</div>
 <div id="journalList"></div>
 </div>
 <div class="sidebar-bottom">
@@ -70,15 +83,33 @@
 
 <section class="preview-panel" id="entryPreview">
 <div class="editor-header">
-<button class="editor-close-button" type="button">
-<i class="bi bi-x-lg"></i>
-</button>
-<div class="editor-date">
-        Thursday, June 25, 2026
+
+    <button
+        class="editor-close-button"
+        type="button">
+        <i class="bi bi-x-lg"></i>
+    </button>
+
+    <div class="text-center">
+
+        
+
+        <div
+            id="editorDate"
+            class="editor-date">
+        </div>
+
     </div>
-<button class="editor-new-button" type="button">
-<i class="bi bi-plus-lg"></i>
-</button>
+
+    <button
+        class="editor-new-button"
+        id="editorNewButton"
+        type="button">
+
+        <i class="bi bi-plus-lg"></i>
+
+    </button>
+
 </div>
 <div class="editor-toolbar-wrapper">
 <div aria-label="Journal notes formatting" class="editor-toolbar gap-2 mb-2" role="toolbar">

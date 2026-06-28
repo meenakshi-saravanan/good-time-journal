@@ -1,3 +1,4 @@
+console.log("✅ entriesController.js loaded");
 const db = require("../database/db");
 
 function getEntries(req, res) {
@@ -76,6 +77,8 @@ function getEntry(req, res) {
 }
 
 function createEntry(req, res) {
+    console.log("✅ NEW createEntry() is running");
+  console.log(req.body);
   const {
     journal_id,
     title,
@@ -125,12 +128,7 @@ function createEntry(req, res) {
         return;
       }
 
-      if (!isGoodTimeJournal && (!title || !content)) {
-        res.status(400).json({
-          error: "Title and content are required."
-        });
-        return;
-      }
+    
 
       const entryDate =
         entry_date || new Date().toISOString().split("T")[0];
@@ -199,6 +197,57 @@ function createEntry(req, res) {
   );
 }
 
+function updateEntry(req, res) {
+
+    const {
+        title,
+        preview,
+        content
+    } = req.body;
+
+    db.run(
+        `UPDATE journal_entries
+         SET
+            title = ?,
+            preview = ?,
+            content = ?,
+            updated_at = CURRENT_TIMESTAMP
+         WHERE id = ?
+           AND user_id = ?`,
+        [
+            title,
+            preview,
+            content,
+            req.params.id,
+            req.session.userId
+        ],
+        function (err) {
+
+            if (err) {
+                console.error(err);
+
+                return res.status(500).json({
+                    error: "Unable to update entry."
+                });
+            }
+
+            if (this.changes === 0) {
+
+                return res.status(404).json({
+                    error: "Entry not found."
+                });
+
+            }
+
+            res.json({
+                success: true,
+                updated_at: new Date().toISOString()
+            });
+
+        }
+    );
+
+}
 function deleteEntry(req, res) {
   db.run(
     `DELETE FROM journal_entries
@@ -225,6 +274,7 @@ module.exports = {
     getEntries,
     getEntry,
     createEntry,
+    updateEntry,
     deleteEntry
 };
 
