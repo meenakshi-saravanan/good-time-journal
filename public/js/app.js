@@ -31,6 +31,95 @@ function getFilteredEntries() {
 }
 window.getFilteredEntries = getFilteredEntries;
 
+let pendingDeleteEntryId = null;
+
+function openDeleteEntryModal(entryId) {
+  pendingDeleteEntryId = entryId;
+
+  const modalElement =
+    document.getElementById("deleteEntryModal");
+
+  if (!modalElement) {
+    return;
+  }
+
+  const modal = new bootstrap.Modal(modalElement);
+  modal.show();
+}
+
+async function confirmDeleteEntry() {
+  if (!pendingDeleteEntryId) {
+    return;
+  }
+
+  const confirmButton =
+    document.getElementById("confirmDeleteEntryButton");
+
+  if (confirmButton) {
+    confirmButton.disabled = true;
+    confirmButton.textContent = "Deleting...";
+  }
+
+  const errorContainer =
+    document.getElementById("deleteEntryError");
+
+  if (errorContainer) {
+    errorContainer.innerHTML = "";
+  }
+
+  try {
+    await deleteEntry(pendingDeleteEntryId);
+
+    appState.entries = appState.entries.filter(
+      (entry) => entry.id !== pendingDeleteEntryId
+    );
+
+    if (appState.selectedEntryId === pendingDeleteEntryId) {
+      appState.selectedEntryId = null;
+      loadEntryIntoEditor(null);
+    }
+
+    renderEntryList(getFilteredEntries());
+
+    const modalElement =
+      document.getElementById("deleteEntryModal");
+
+    if (modalElement) {
+      const modalInstance =
+        bootstrap.Modal.getInstance(modalElement);
+
+      if (modalInstance) {
+        modalInstance.hide();
+      }
+    }
+
+    pendingDeleteEntryId = null;
+
+    const journalId =
+      window.currentJournalId || getJournalIdFromUrl();
+
+    if (journalId && document.getElementById("journalTitle")) {
+      window.location.href = `/journals/${journalId}`;
+    }
+  } catch (error) {
+    console.error(error);
+
+    if (errorContainer) {
+      errorContainer.innerHTML = `
+        <div class="alert alert-danger" role="alert">
+          Unable to delete journal entry. Please try again.
+        </div>
+      `;
+    }
+  } finally {
+    if (confirmButton) {
+      confirmButton.disabled = false;
+      confirmButton.textContent = "Delete Entry";
+    }
+  }
+}
+window.confirmDeleteEntry = confirmDeleteEntry;
+
 function selectJournal(journalId) {
 
   appState.selectedJournalId = journalId;
@@ -85,6 +174,29 @@ document.addEventListener(
     }
     const createJournalButton =
     document.getElementById("createJournalButton");
+
+    const deleteEntryButton =
+      document.getElementById("deleteEntryButton");
+
+    if (deleteEntryButton) {
+      deleteEntryButton.addEventListener("click", () => {
+        if (!appState.selectedEntryId) {
+          return;
+        }
+
+        openDeleteEntryModal(appState.selectedEntryId);
+      });
+    }
+
+    const confirmDeleteEntryButton =
+      document.getElementById("confirmDeleteEntryButton");
+
+    if (confirmDeleteEntryButton) {
+      confirmDeleteEntryButton.addEventListener(
+        "click",
+        confirmDeleteEntry
+      );
+    }
 
 if (createJournalButton) {
 
@@ -766,6 +878,11 @@ function renderAuthError(message) {
 }
 
 async function removeEntry(id) {
+
+  if (document.getElementById("deleteEntryModal")) {
+    openDeleteEntryModal(id);
+    return;
+  }
 
   const confirmed = confirm(
     "Are you sure you want to delete this journal entry?"
