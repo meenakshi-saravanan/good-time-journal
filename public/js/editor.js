@@ -3,6 +3,7 @@ import StarterKit from "https://esm.sh/@tiptap/starter-kit@3.27.1";
 import Link from "https://esm.sh/@tiptap/extension-link@3.27.1";
 import Underline from "https://esm.sh/@tiptap/extension-underline@3.27.1";
 import Highlight from "https://esm.sh/@tiptap/extension-highlight@3.27.1";
+import Image from "https://esm.sh/@tiptap/extension-image@3.27.1";
 import TextAlign from "https://esm.sh/@tiptap/extension-text-align@3.27.1";
 import Placeholder from "https://esm.sh/@tiptap/extension-placeholder@3.27.1";
 
@@ -11,8 +12,103 @@ const editorElement =
 
 let autosaveTimer = null;
 let lastSavedContent = "";
+let imageCutMenu = null;
+let activeImageContextTarget = null;
 
 window.notesEditor = null;
+
+function createImageCutMenu() {
+  if (imageCutMenu) {
+    return imageCutMenu;
+  }
+
+  imageCutMenu = document.createElement("div");
+  imageCutMenu.className = "image-cut-context-menu d-none";
+  imageCutMenu.setAttribute("role", "menu");
+  imageCutMenu.innerHTML = `
+    <button class="image-cut-context-menu__item" data-action="cut" type="button">Cut</button>
+  `;
+
+  imageCutMenu.addEventListener("click", (event) => {
+    const action = event.target.closest("[data-action]")?.dataset.action;
+
+    event.stopPropagation();
+
+    if (action === "cut") {
+      cutActiveImage();
+    }
+  });
+
+  document.body.appendChild(imageCutMenu);
+  document.addEventListener("click", hideImageCutMenu);
+  document.addEventListener("scroll", hideImageCutMenu, true);
+
+  return imageCutMenu;
+}
+
+function hideImageCutMenu() {
+  if (imageCutMenu) {
+    imageCutMenu.classList.add("d-none");
+  }
+
+  activeImageContextTarget = null;
+}
+
+function showImageCutMenu(event) {
+  const imageElement = event.target.closest("img");
+
+  if (!imageElement || !window.notesEditor) {
+    return;
+  }
+
+  event.preventDefault();
+
+  const menu = createImageCutMenu();
+  activeImageContextTarget = imageElement;
+  menu.classList.remove("d-none");
+
+  const { clientX, clientY } = event;
+  const menuWidth = 120;
+  const menuHeight = 40;
+  const viewportWidth = window.innerWidth;
+  const viewportHeight = window.innerHeight;
+
+  let left = clientX;
+  let top = clientY;
+
+  if (left + menuWidth > viewportWidth - 8) {
+    left = viewportWidth - menuWidth - 8;
+  }
+
+  if (top + menuHeight > viewportHeight - 8) {
+    top = viewportHeight - menuHeight - 8;
+  }
+
+  menu.style.left = `${Math.max(8, left)}px`;
+  menu.style.top = `${Math.max(8, top)}px`;
+}
+
+function cutActiveImage() {
+  if (!window.notesEditor || !activeImageContextTarget) {
+    return;
+  }
+
+  const position = window.notesEditor.view.posAtDOM(activeImageContextTarget, 0);
+
+  if (typeof position !== "number") {
+    hideImageCutMenu();
+    return;
+  }
+
+  window.notesEditor
+    .chain()
+    .focus()
+    .setNodeSelection(position)
+    .deleteSelection()
+    .run();
+
+  hideImageCutMenu();
+}
 
 
 if (editorElement) {
@@ -31,6 +127,9 @@ if (editorElement) {
       Placeholder.configure({
   placeholder: "Start writing..."
 }),
+      Image.configure({
+        inline: true
+      }),
       TextAlign.configure({
   types: [
     "heading",
@@ -123,6 +222,8 @@ editorProps: {
   }
 }
   });
+
+  editorElement.addEventListener("contextmenu", showImageCutMenu);
 
   document
     .querySelectorAll("[data-editor-command]")
@@ -311,6 +412,26 @@ document
 
     }
   );
+
+const insertImageButton =
+  document.getElementById("insertImageButton");
+const imageUploadInput =
+  document.getElementById("imageUploadInput");
+
+insertImageButton?.addEventListener("click", () => {
+  imageUploadInput?.click();
+});
+
+imageUploadInput?.addEventListener("change", async (event) => {
+  const [file] = event.target.files || [];
+
+  if (!file) {
+    return;
+  }
+
+  await handleImageUpload(file);
+  event.target.value = "";
+});
 
 document
   .getElementById("undoButton")
@@ -774,6 +895,69 @@ document
   }
 
 );
+
+function showImageUploadError(message) {
+  const errorContainer =
+    document.getElementById("imageUploadError");
+
+  if (!errorContainer) {
+    return;
+  }
+
+  if (!message) {
+    errorContainer.innerHTML = "";
+    return;
+  }
+
+  errorContainer.innerHTML = `
+    <div class="alert alert-danger py-2 px-3 mb-0" role="alert">
+      ${message}
+    </div>
+  `;
+}
+
+async function handleImageUpload(file) {
+  if (!file) {
+    showImageUploadError("Please select an image to upload.");
+    return;
+  }
+
+  const allowedTypes = [
+    "image/png",
+    "image/jpeg",
+    "image/jpg",
+    "image/gif",
+    "image/webp"
+  ];
+
+  if (!allowedTypes.includes(file.type)) {
+    showImageUploadError(
+      "Unsupported file type. Please choose a PNG, JPG, JPEG, GIF, or WebP image."
+    );
+    return;
+  }
+
+  if (!window.notesEditor) {
+    showImageUploadError("The editor is not ready yet.");
+    return;
+  }
+
+  showImageUploadError("");
+
+  try {
+    const formData = new FormData();
+    formData.append("image", file);
+
+    const result = await window.uploadImage(formData);
+
+    window.notesEditor.chain().focus().setImage({ src: result.url }).run();
+    window.notesEditor.commands.focus("end");
+  } catch (error) {
+    showImageUploadError(
+      error.message || "Unable to upload image. Please try again."
+    );
+  }
+}
 
 function extractEntryMetadata(html) {
 
