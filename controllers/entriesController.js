@@ -255,10 +255,11 @@ function deleteEntry(req, res) {
       AND user_id = ?`,
     [req.params.id, req.session.userId],
     function handleDelete(err) {
-      if (err) {
-        res.status(500).json({ error: "Unable to delete journal entry." });
-        return;
-      }
+     if (err) {
+  console.error(err);
+  res.status(500).json({ error: err.message });
+  return;
+}
 
       if (this.changes === 0) {
         res.status(404).json({ error: "Journal entry not found." });
