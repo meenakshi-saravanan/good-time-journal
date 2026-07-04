@@ -13,31 +13,38 @@
 <link href="css/style.css" rel="stylesheet"/>
 </head>
 <body class="app-page">
-<header class="app-header">
-<div class="container-fluid px-4">
-<div class="d-flex align-items-center justify-content-between">
-<!-- Left -->
-<div class="d-flex align-items-center gap-3">
-<img alt="Chapters" class="header-logo" src="../assets/images/Header-Logo.svg"/>
-</div>
-<!-- Right -->
-<div class="d-flex align-items-center gap-3">
 
-<div class="user-avatar">
-          MS
-        </div>
-</div>
-</div>
-</div>
-</header>
 <main class="chapters-layout">
 <!-- Left Sidebar -->
 <aside class="sidebar">
 <div class="sidebar-top">
-<button class="sidebar-item active" data-journal-id="all" id="allEntriesButton">
-<i class="bi bi-journal-text"></i>
-<span>All Entries</span>
-</button>
+   <div class="sidebar-header">
+
+    <button
+        id="toggleSidebarButton"
+        class="sidebar-collapse-button"
+        type="button">
+
+        <i
+            id="sidebarToggleIcon"
+            class="bi bi-layout-sidebar-inset">
+        </i>
+
+    </button>
+
+    <div class="sidebar-brand">
+
+        <img
+            src="assets/images/Header-Logo.svg"
+            class="sidebar-logo sidebar-logo-expanded">
+
+        <img
+            src="assets/images/Header-Logo-Collapsed.svg"
+            class="sidebar-logo sidebar-logo-collapsed">
+
+    </div>
+
+</div>
 <div class="sidebar-heading-row">
 
     <h6 class="sidebar-heading mb-0">
@@ -57,14 +64,22 @@
 <div id="journalList"></div>
 </div>
 <div class="sidebar-bottom">
-<button class="sidebar-item">
-<i class="bi bi-gear"></i>
-<span>Settings</span>
-</button>
-<button class="sidebar-item">
-<i class="bi bi-question-circle"></i>
-<span>Help</span>
-</button>
+
+</div>
+<div class="sidebar-profile">
+
+    <div class="user-avatar">
+
+        MS
+
+    </div>
+
+    <div class="sidebar-profile-name">
+
+        Meenakshi
+
+    </div>
+
 </div>
 </aside>
 <!-- Journal List -->

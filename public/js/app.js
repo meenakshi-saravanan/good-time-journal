@@ -4,11 +4,13 @@ const appState = {
 
   entries: [],
 
-  selectedJournalId: "all",
+  selectedJournalId: null,
 
   selectedEntryId: null,
 
   entrySearchQuery: "",
+
+  sidebarCollapsed: false,
 
   isEditorDirty: false
 
@@ -88,18 +90,39 @@ async function setupWelcomePage() {
   });
 }
 
+function toggleSidebar() {
+
+    appState.sidebarCollapsed =
+        !appState.sidebarCollapsed;
+
+    document.body.classList.toggle(
+        "sidebar-collapsed",
+        appState.sidebarCollapsed
+    );
+
+    const icon =
+        document.getElementById("sidebarToggleIcon");
+
+    if (icon) {
+
+        icon.className =
+            appState.sidebarCollapsed
+                ? "bi bi-layout-sidebar"
+                : "bi bi-layout-sidebar-inset";
+
+    }
+
+}
 function getFilteredEntries() {
   const query =
     appState.entrySearchQuery.trim().toLowerCase();
 
-  const entries =
-    appState.selectedJournalId === "all"
-      ? appState.entries
-      : appState.entries.filter(
+ const entries =
+    appState.entries.filter(
         (entry) =>
-          String(entry.journal_id) ===
-          String(appState.selectedJournalId)
-      );
+            String(entry.journal_id) ===
+            String(appState.selectedJournalId)
+    );
 
   if (!query) {
     return entries;
@@ -126,26 +149,17 @@ window.getFilteredEntries = getFilteredEntries;
 let pendingDeleteEntryId = null;
 
 function getEntriesForSelectedJournal() {
-  if (appState.selectedJournalId === "all") {
-    return appState.entries;
-  }
 
-  return appState.entries.filter(
-    (entry) =>
-      String(entry.journal_id) ===
-      String(appState.selectedJournalId)
-  );
+    return appState.entries.filter(
+        (entry) =>
+            String(entry.journal_id) ===
+            String(appState.selectedJournalId)
+    );
+
 }
 
 function getWritableJournalId() {
-  if (appState.selectedJournalId !== "all") {
-    return appState.selectedJournalId;
-  }
-
-  const firstJournal =
-    appState.journals[0];
-
-  return firstJournal ? firstJournal.id : null;
+  return appState.selectedJournalId;
 }
 
 function findEntryToSelectAfterDelete(deletedEntryId, entriesBeforeDelete) {
@@ -502,6 +516,20 @@ function selectJournal(journalId) {
 document.addEventListener(
   "DOMContentLoaded",
   async () => {
+  
+  const toggleSidebarButton =
+    document.getElementById(
+        "toggleSidebarButton"
+    );
+
+if (toggleSidebarButton) {
+
+    toggleSidebarButton.addEventListener(
+        "click",
+        toggleSidebar
+    );
+
+}
     const page =
       document.body.dataset.page;
 
@@ -533,6 +561,16 @@ document.addEventListener(
 
 
     renderInitialLoadingStates();
+
+
+if (toggleSidebarButton) {
+
+    toggleSidebarButton.addEventListener(
+        "click",
+        toggleSidebar
+    );
+
+}
 
     const journalsContainer =
       document.getElementById("journals");
@@ -703,9 +741,9 @@ editorNewButton.addEventListener(
   createNewEntryFromEditor
 );
 
-}
-  }
-);
+}});
+  
+
 
 function renderProfileHeader(profile) {
   const userName =
@@ -851,13 +889,12 @@ async function loadEntries() {
 
   const entries = await fetchEntries();
 
-  const filteredEntries =
-    appState.selectedJournalId === "all"
-      ? entries
-      : entries.filter(
-        entry =>
-          entry.journal_id === appState.selectedJournalId
-      );
+const filteredEntries =
+    entries.filter(
+        (entry) =>
+            String(entry.journal_id) ===
+            String(appState.selectedJournalId)
+    );
 
   renderEntries(filteredEntries);
 }
@@ -876,6 +913,15 @@ async function loadJournals() {
 
   appState.entries =
     entries;
+    if (
+    journals.length > 0 &&
+    !appState.selectedJournalId
+) {
+
+    appState.selectedJournalId =
+        journals[0].id;
+
+}
 
   renderEntryList(
     getFilteredEntries()
@@ -1288,3 +1334,4 @@ function loadEntryIntoEditor(entry) {
     appState.isEditorDirty = false;
 
 }
+  

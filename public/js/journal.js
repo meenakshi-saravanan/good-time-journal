@@ -212,21 +212,9 @@ function renderJournalSidebar(journals) {
     container.appendChild(button);
 
   });
-  const allEntriesButton =
-    document.getElementById("allEntriesButton");
 
-  if (allEntriesButton) {
-
-    allEntriesButton.onclick = () => {
-
-      selectJournal("all");
-
-    };
 
   }
-
-
-}
 
 function renderTemplates() {
   const container =
