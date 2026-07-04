@@ -100,12 +100,16 @@ function cutActiveImage() {
     return;
   }
 
-  window.notesEditor
-    .chain()
-    .focus()
-    .setNodeSelection(position)
-    .deleteSelection()
-    .run();
+ window.notesEditor
+  .chain()
+  .focus()
+  .insertContent(`
+    <img
+      src="${result.url}"
+      class="journal-image"
+    />
+  `)
+  .run();
 
   hideImageCutMenu();
 }

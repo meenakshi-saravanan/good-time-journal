@@ -1075,3 +1075,17 @@ position: relative;
     margin-top: 2px;
 
 }
+
+.tiptap-prose img {
+
+    display: block;
+
+    max-width: 85%;
+
+    height: auto;
+
+    margin: 24px auto;
+
+    border-radius: 8px;
+
+}
