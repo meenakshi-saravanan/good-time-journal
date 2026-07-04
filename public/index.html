@@ -6,40 +6,45 @@
 <meta content="width=device-width, initial-scale=1" name="viewport"/>
 <title>Chapters Journal</title>
 <link href="../assets/images/Favicon.svg" rel="icon" type="image/svg+xml"/>
-<link href="https://fonts.googleapis.com/css2?family=Noto+Sans:wght@300;400;500;600;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Inter:ital,opsz,wght@0,14..32,100..900;1,14..32,100..900&display=swap" rel="stylesheet">
 <link crossorigin="anonymous" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" integrity="sha384-QWTKZyjpPEjISv5WaRU9OFeRpok6YctnYmDr5pNlyT2bRjXh0JMhjY6hW+ALEwIH" rel="stylesheet"/>
 <link crossorigin="anonymous" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" integrity="sha384-QWTKZyjpPEjISv5WaRU9OFeRpok6YctnYmDr5pNlyT2bRjXh0JMhjY6hW+ALEwIH" rel="stylesheet"/>
 <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.13.1/font/bootstrap-icons.min.css" rel="stylesheet"/>
 <link href="css/style.css" rel="stylesheet"/>
 </head>
 <body class="app-page">
-<header class="app-header">
-<div class="container-fluid px-4">
-<div class="d-flex align-items-center justify-content-between">
-<!-- Left -->
-<div class="d-flex align-items-center gap-3">
-<img alt="Chapters" class="header-logo" src="../assets/images/Header-Logo.svg"/>
-</div>
-<!-- Right -->
-<div class="d-flex align-items-center gap-3">
-<button class="btn btn-sm" id="logoutButton" type="button">
-        Logout
-      </button>
-<div class="user-avatar">
-          MS
-        </div>
-</div>
-</div>
-</div>
-</header>
+
 <main class="chapters-layout">
 <!-- Left Sidebar -->
 <aside class="sidebar">
 <div class="sidebar-top">
-<button class="sidebar-item active" data-journal-id="all" id="allEntriesButton">
-<i class="bi bi-journal-text"></i>
-<span>All Entries</span>
-</button>
+   <div class="sidebar-header">
+
+    <button
+        id="toggleSidebarButton"
+        class="sidebar-collapse-button"
+        type="button">
+
+        <i
+            id="sidebarToggleIcon"
+            class="bi bi-layout-sidebar-inset">
+        </i>
+
+    </button>
+
+    <div class="sidebar-brand">
+
+        <img
+            src="assets/images/Header-Logo.svg"
+            class="sidebar-logo sidebar-logo-expanded">
+
+        <img
+            src="assets/images/Header-Logo-Collapsed.svg"
+            class="sidebar-logo sidebar-logo-collapsed">
+
+    </div>
+
+</div>
 <div class="sidebar-heading-row">
 
     <h6 class="sidebar-heading mb-0">
@@ -59,14 +64,22 @@
 <div id="journalList"></div>
 </div>
 <div class="sidebar-bottom">
-<button class="sidebar-item">
-<i class="bi bi-gear"></i>
-<span>Settings</span>
-</button>
-<button class="sidebar-item">
-<i class="bi bi-question-circle"></i>
-<span>Help</span>
-</button>
+
+</div>
+<div class="sidebar-profile">
+
+    <div class="user-avatar">
+
+        MS
+
+    </div>
+
+    <div class="sidebar-profile-name">
+
+        Meenakshi
+
+    </div>
+
 </div>
 </aside>
 <!-- Journal List -->
@@ -97,9 +110,14 @@
 
         
 
-        <div
+    <div
             id="editorDate"
             class="editor-date">
+        </div>
+        <div
+            id="saveStatus"
+            class="save-status"
+            aria-live="polite">
         </div>
 
     </div>
@@ -262,6 +280,73 @@
               Journal Name
             </label>
 <input class="form-control" id="journalName" placeholder="Personal Reflections" required="" type="text"/>
+</div>
+<div class="mb-3">
+
+    <label class="form-label">
+        Journal Color
+    </label>
+
+    <div class="journal-color-picker">
+
+        <button
+            type="button"
+            class="journal-color active"
+            data-color="#8B5CF6"
+            style="background:#8B5CF6">
+        </button>
+
+        <button
+            type="button"
+            class="journal-color"
+            data-color="#3B82F6"
+            style="background:#3B82F6">
+        </button>
+
+        <button
+            type="button"
+            class="journal-color"
+            data-color="#10B981"
+            style="background:#10B981">
+        </button>
+
+        <button
+            type="button"
+            class="journal-color"
+            data-color="#F59E0B"
+            style="background:#F59E0B">
+        </button>
+
+        <button
+            type="button"
+            class="journal-color"
+            data-color="#EF4444"
+            style="background:#EF4444">
+        </button>
+
+        <button
+            type="button"
+            class="journal-color"
+            data-color="#EC4899"
+            style="background:#EC4899">
+        </button>
+
+        <button
+            type="button"
+            class="journal-color"
+            data-color="#6B7280"
+            style="background:#6B7280">
+        </button>
+
+        <button
+            type="button"
+            class="journal-color"
+            data-color="#14B8A6"
+            style="background:#14B8A6">
+        </button>
+
+    </div>
+
 </div>
 </div>
 <div class="modal-footer">

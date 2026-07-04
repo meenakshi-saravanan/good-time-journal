@@ -12,10 +12,8 @@
     "@tiptap/extension-link": "^3.27.1",
     "@tiptap/extension-underline": "^3.27.1",
     "@tiptap/starter-kit": "^3.27.1",
-    "bcrypt": "^6.0.0",
     "bootstrap-icons": "^1.13.1",
     "express": "^5.0.0",
-    "express-session": "^1.19.0",
     "multer": "^2.2.0",
     "sqlite3": "^6.0.1"
   }

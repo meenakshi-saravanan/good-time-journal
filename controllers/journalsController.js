@@ -4,21 +4,19 @@ const GOOD_TIME_TEMPLATE = "good_time";
 const GOOD_TIME_NAME = "Good Time Journal";
 const STANDARD_TEMPLATE = "standard";
 
-function ensureGoodTimeJournal(userId, callback) {
+function ensureGoodTimeJournal(callback) {
   db.get(
     `SELECT
       id,
-      user_id,
       name,
       template_type,
       created_at
     FROM journals
-    WHERE user_id = ?
-      AND name = ?
+    WHERE name = ?
       AND template_type = ?
     ORDER BY created_at ASC
     LIMIT 1`,
-    [userId, GOOD_TIME_NAME, GOOD_TIME_TEMPLATE],
+    [GOOD_TIME_NAME, GOOD_TIME_TEMPLATE],
     (findErr, existingJournal) => {
       if (findErr) {
         callback(findErr);
@@ -31,8 +29,8 @@ function ensureGoodTimeJournal(userId, callback) {
       }
 
       createJournalRecord(
-        userId,
         GOOD_TIME_NAME,
+        "#8B5CF6",
         GOOD_TIME_TEMPLATE,
         callback
       );
@@ -43,21 +41,21 @@ function ensureGoodTimeJournal(userId, callback) {
 function getJournals(req, res) {
   db.all(
     `SELECT
-      journals.id,
-      journals.name,
-      journals.template_type,
-      journals.created_at,
-      COUNT(journal_entries.id) AS entry_count
+  journals.id,
+  journals.name,
+  journals.color,
+  journals.template_type,
+  journals.created_at,
+  COUNT(journal_entries.id) AS entry_count
     FROM journals
     LEFT JOIN journal_entries
       ON journal_entries.journal_id = journals.id
-      AND journal_entries.user_id = journals.user_id
-    WHERE journals.user_id = ?
     GROUP BY journals.id
     ORDER BY journals.created_at ASC`,
-    [req.session.userId],
+    [],
     (err, rows) => {
       if (err) {
+        console.error(err);
         res.status(500).json({ error: "Unable to fetch journals." });
         return;
       }
@@ -70,16 +68,17 @@ function getJournals(req, res) {
 function getJournal(req, res) {
   db.get(
     `SELECT
-      id,
-      name,
-      template_type,
-      created_at
+  id,
+  name,
+  color,
+  template_type,
+  created_at
     FROM journals
-    WHERE id = ?
-      AND user_id = ?`,
-    [req.params.id, req.session.userId],
+    WHERE id = ?`,
+    [req.params.id],
     (err, row) => {
       if (err) {
+        console.error(err);
         res.status(500).json({ error: "Unable to fetch journal." });
         return;
       }
@@ -94,14 +93,18 @@ function getJournal(req, res) {
   );
 }
 
-function createJournalRecord(userId, name, templateType, callback) {
+function createJournalRecord(
+  name,
+  color,
+  templateType,
+  callback)  {
   db.run(
     `INSERT INTO journals (
-      user_id,
-      name,
-      template_type
-    ) VALUES (?, ?, ?)`,
-    [userId, name, templateType],
+  name,
+  color,
+  template_type
+) VALUES (?, ?, ?)`,
+    [name, color, templateType],
     function handleInsert(err) {
       if (err) {
         callback(err);
@@ -110,15 +113,14 @@ function createJournalRecord(userId, name, templateType, callback) {
 
       db.get(
         `SELECT
-          id,
-          user_id,
-          name,
-          template_type,
-          created_at
+  id,
+  name,
+  color,
+  template_type,
+  created_at
         FROM journals
-        WHERE id = ?
-          AND user_id = ?`,
-        [this.lastID, userId],
+        WHERE id = ?`,
+        [this.lastID],
         callback
       );
     }
@@ -126,7 +128,10 @@ function createJournalRecord(userId, name, templateType, callback) {
 }
 
 function createJournal(req, res) {
-  const { name } = req.body;
+ const {
+  name,
+  color = "#8B5CF6"
+} = req.body;
 
   if (!name || !name.trim()) {
     res.status(400).json({ error: "Journal name is required." });
@@ -134,11 +139,12 @@ function createJournal(req, res) {
   }
 
   createJournalRecord(
-    req.session.userId,
-    name.trim(),
-    STANDARD_TEMPLATE,
-    (err, journal) => {
+  name.trim(),
+  color,
+  STANDARD_TEMPLATE,
+  (err, journal) => {
       if (err) {
+        console.error(err);
         res.status(500).json({ error: "Unable to create journal." });
         return;
       }
@@ -149,7 +155,11 @@ function createJournal(req, res) {
 }
 
 function createFromTemplate(req, res) {
-  const { name, template_type } = req.body;
+const {
+  name,
+  color = "#8B5CF6",
+  template_type
+} = req.body;
 
   if (!name || !name.trim()) {
     res.status(400).json({ error: "Journal name is required." });
@@ -162,11 +172,12 @@ function createFromTemplate(req, res) {
   }
 
   createJournalRecord(
-    req.session.userId,
-    name.trim(),
-    GOOD_TIME_TEMPLATE,
-    (err, journal) => {
+  name.trim(),
+  color,
+  GOOD_TIME_TEMPLATE,
+  (err, journal) => {
       if (err) {
+        console.error(err);
         res.status(500).json({ error: "Unable to create journal." });
         return;
       }
@@ -177,8 +188,9 @@ function createFromTemplate(req, res) {
 }
 
 function migrateGoodTimeJournal(req, res) {
-  ensureGoodTimeJournal(req.session.userId, (err, journal) => {
+  ensureGoodTimeJournal((err, journal) => {
     if (err) {
+      console.error(err);
       res.status(500).json({ error: "Unable to create journal." });
       return;
     }

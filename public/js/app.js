@@ -4,34 +4,388 @@ const appState = {
 
   entries: [],
 
-  selectedJournalId: "all",
+  selectedJournalId: null,
 
-  selectedEntryId: null
+  selectedEntryId: null,
+
+  entrySearchQuery: "",
+
+  sidebarCollapsed: false,
+
+  isEditorDirty: false
 
 };
 
 window.appState = appState;
 
-function getFilteredEntries() {
+async function setupWelcomePage() {
 
-  if (
-    appState.selectedJournalId === "all"
-  ) {
+  const form =
+    document.getElementById("welcomeForm");
 
-    return appState.entries;
-
+  if (!form) {
+    return;
   }
 
-  return appState.entries.filter(
-    (entry) =>
-      entry.journal_id ===
-      appState.selectedJournalId
-  );
+  try {
+    const profile =
+      await fetchProfile();
+
+    if (profile) {
+      window.location.href = "/";
+      return;
+    }
+  } catch (error) {
+    renderAuthError(
+      "Unable to start Chapters. Please restart the application."
+    );
+    return;
+  }
+
+  const nameInput =
+    document.getElementById("displayName");
+
+  if (nameInput) {
+    nameInput.focus();
+  }
+
+  form.addEventListener("submit", async (event) => {
+    event.preventDefault();
+    clearAuthError();
+
+    const displayName =
+      String(nameInput?.value || "").trim();
+
+    if (!displayName || displayName.length > 40) {
+      renderAuthError(
+        "Please enter a name using 1 to 40 characters."
+      );
+      return;
+    }
+
+    const submitButton =
+      form.querySelector("button[type='submit']");
+
+    if (submitButton) {
+      submitButton.disabled = true;
+      submitButton.textContent = "Opening Chapters...";
+    }
+
+    try {
+      await createProfile({
+        display_name: displayName
+      });
+
+      window.location.href = "/";
+    } catch (error) {
+      renderAuthError(
+        "Unable to create your profile. Please try again."
+      );
+
+      if (submitButton) {
+        submitButton.disabled = false;
+        submitButton.textContent = "Continue";
+      }
+    }
+  });
+}
+
+function toggleSidebar() {
+
+    appState.sidebarCollapsed =
+        !appState.sidebarCollapsed;
+
+    document.body.classList.toggle(
+        "sidebar-collapsed",
+        appState.sidebarCollapsed
+    );
+
+    const icon =
+        document.getElementById("sidebarToggleIcon");
+
+    if (icon) {
+
+        icon.className =
+            appState.sidebarCollapsed
+                ? "bi bi-layout-sidebar"
+                : "bi bi-layout-sidebar-inset";
+
+    }
+
+}
+function getFilteredEntries() {
+  const query =
+    appState.entrySearchQuery.trim().toLowerCase();
+
+ const entries =
+    appState.entries.filter(
+        (entry) =>
+            String(entry.journal_id) ===
+            String(appState.selectedJournalId)
+    );
+
+  if (!query) {
+    return entries;
+  }
+
+  return entries.filter((entry) => {
+    const searchableText = [
+      entry.title,
+      entry.preview,
+      entry.activity,
+      entry.notes,
+      entry.content
+    ]
+      .filter(Boolean)
+      .join(" ")
+      .toLowerCase();
+
+    return searchableText.includes(query);
+  });
 
 }
 window.getFilteredEntries = getFilteredEntries;
 
 let pendingDeleteEntryId = null;
+
+function getEntriesForSelectedJournal() {
+
+    return appState.entries.filter(
+        (entry) =>
+            String(entry.journal_id) ===
+            String(appState.selectedJournalId)
+    );
+
+}
+
+function getWritableJournalId() {
+  return appState.selectedJournalId;
+}
+
+function findEntryToSelectAfterDelete(deletedEntryId, entriesBeforeDelete) {
+  const visibleEntries =
+    entriesBeforeDelete || getFilteredEntries();
+
+  const deletedIndex =
+    visibleEntries.findIndex(
+      (entry) => String(entry.id) === String(deletedEntryId)
+    );
+
+  if (deletedIndex === -1) {
+    return null;
+  }
+
+  return (
+    visibleEntries[deletedIndex + 1] ||
+    visibleEntries[deletedIndex - 1] ||
+    null
+  );
+}
+
+function renderInitialLoadingStates() {
+  const journalList =
+    document.getElementById("journalList");
+
+  if (journalList) {
+    journalList.innerHTML = `
+      <div class="skeleton-stack" aria-label="Loading journals">
+        <div class="skeleton-line"></div>
+        <div class="skeleton-line"></div>
+        <div class="skeleton-line short"></div>
+      </div>
+    `;
+  }
+
+  const entryList =
+    document.getElementById("entryList");
+
+  if (entryList) {
+    entryList.innerHTML = `
+      <div class="skeleton-stack entry-list-skeleton" aria-label="Loading entries">
+        <div class="skeleton-entry"></div>
+        <div class="skeleton-entry"></div>
+        <div class="skeleton-entry"></div>
+      </div>
+    `;
+  }
+
+  renderEditorEmptyState("Loading...", "Your writing space is getting ready.");
+}
+
+function renderEmptyState({
+  title,
+  description,
+  actionLabel,
+  actionId,
+  icon = "bi-journal-text"
+}) {
+  return `
+    <div class="app-empty-state">
+      <i class="bi ${icon}" aria-hidden="true"></i>
+      <h3>${title}</h3>
+      <p>${description}</p>
+      ${
+        actionLabel
+          ? `<button class="btn btn-primary btn-sm" id="${actionId}" type="button">${actionLabel}</button>`
+          : ""
+      }
+    </div>
+  `;
+}
+
+function bindEmptyStateActions() {
+  document
+    .getElementById("emptyCreateJournalButton")
+    ?.addEventListener("click", () => {
+      const modalElement =
+        document.getElementById("createJournalModal");
+
+      if (modalElement) {
+        new bootstrap.Modal(modalElement).show();
+      }
+    });
+
+  document
+    .getElementById("emptyNewEntryButton")
+    ?.addEventListener("click", createNewEntryFromEditor);
+
+  document
+    .getElementById("clearSearchButton")
+    ?.addEventListener("click", () => {
+      const searchInput =
+        document.getElementById("entrySearch");
+
+      appState.entrySearchQuery = "";
+
+      if (searchInput) {
+        searchInput.value = "";
+      }
+
+      renderEntryList(getFilteredEntries());
+    });
+}
+
+function renderEditorEmptyState(title = "Select an entry", description = "or create a new one.") {
+  const editorDate =
+    document.getElementById("editorDate");
+
+  const saveStatus =
+    document.getElementById("saveStatus");
+
+  const previewPanel =
+    document.getElementById("entryPreview");
+
+  if (editorDate) {
+    editorDate.textContent = "";
+  }
+
+  if (saveStatus) {
+    saveStatus.textContent = "";
+    saveStatus.dataset.state = "";
+  }
+
+  if (previewPanel) {
+    previewPanel.classList.add("editor-empty");
+  }
+
+  if (window.notesEditor) {
+    window.notesEditor.commands.clearContent();
+    window.notesEditor.setEditable(false);
+  }
+
+  document
+    .querySelectorAll(
+      ".editor-toolbar button, #deleteEntryButton, #insertImageButton"
+    )
+    .forEach((button) => {
+      button.disabled = true;
+    });
+
+  const editorBody =
+    document.querySelector(".editor-body");
+
+  if (editorBody) {
+    editorBody.dataset.emptyTitle = title;
+    editorBody.dataset.emptyDescription = description;
+  }
+}
+
+function activateEditor() {
+  const previewPanel =
+    document.getElementById("entryPreview");
+
+  if (previewPanel) {
+    previewPanel.classList.remove("editor-empty");
+  }
+
+  if (window.notesEditor) {
+    window.notesEditor.setEditable(true);
+  }
+
+  document
+    .querySelectorAll(
+      ".editor-toolbar button, #deleteEntryButton, #insertImageButton"
+    )
+    .forEach((button) => {
+      button.disabled = false;
+    });
+}
+
+async function createNewEntryFromEditor() {
+  if (appState.isEditorDirty) {
+    const shouldCreate =
+      window.confirm("Discard current changes?");
+
+    if (!shouldCreate) {
+      return;
+    }
+  }
+
+  const journalId =
+    getWritableJournalId();
+
+  if (!journalId) {
+    const modalElement =
+      document.getElementById("createJournalModal");
+
+    if (modalElement) {
+      new bootstrap.Modal(modalElement).show();
+    }
+
+    return;
+  }
+
+  try {
+    const today =
+      new Date()
+        .toISOString()
+        .split("T")[0];
+
+    const entry =
+      await saveEntry({
+        journal_id: journalId,
+        title: "Untitled",
+        content: "<p></p>",
+        entry_date: today
+      });
+
+    appState.entries.unshift(entry);
+    appState.entrySearchQuery = "";
+
+    const searchInput =
+      document.getElementById("entrySearch");
+
+    if (searchInput) {
+      searchInput.value = "";
+    }
+
+    renderEntryList(getFilteredEntries());
+    selectEntry(entry.id);
+  } catch (error) {
+    console.error(error);
+    renderEditorEmptyState("Unable to create entry", "Please try again.");
+  }
+}
 
 function openDeleteEntryModal(entryId) {
   pendingDeleteEntryId = entryId;
@@ -52,6 +406,15 @@ async function confirmDeleteEntry() {
     return;
   }
 
+  const entriesBeforeDelete =
+    getFilteredEntries();
+
+  const replacementEntry =
+    findEntryToSelectAfterDelete(
+      pendingDeleteEntryId,
+      entriesBeforeDelete
+    );
+
   const confirmButton =
     document.getElementById("confirmDeleteEntryButton");
 
@@ -71,12 +434,17 @@ async function confirmDeleteEntry() {
     await deleteEntry(pendingDeleteEntryId);
 
     appState.entries = appState.entries.filter(
-      (entry) => entry.id !== pendingDeleteEntryId
+      (entry) => String(entry.id) !== String(pendingDeleteEntryId)
     );
 
-    if (appState.selectedEntryId === pendingDeleteEntryId) {
+    if (String(appState.selectedEntryId) === String(pendingDeleteEntryId)) {
       appState.selectedEntryId = null;
-      loadEntryIntoEditor(null);
+
+      if (replacementEntry) {
+        selectEntry(replacementEntry.id);
+      } else {
+        loadEntryIntoEditor(null);
+      }
     }
 
     renderEntryList(getFilteredEntries());
@@ -123,6 +491,7 @@ window.confirmDeleteEntry = confirmDeleteEntry;
 function selectJournal(journalId) {
 
   appState.selectedJournalId = journalId;
+  appState.selectedEntryId = null;
 
   document
     .querySelectorAll(".sidebar-item")
@@ -140,28 +509,68 @@ function selectJournal(journalId) {
   }
 
   renderEntryList(getFilteredEntries());
+  loadEntryIntoEditor(null);
 
 }
 
 document.addEventListener(
   "DOMContentLoaded",
   async () => {
-    const isAuthPage =
-      document.body.dataset.page === "auth";
+  
+  const toggleSidebarButton =
+    document.getElementById(
+        "toggleSidebarButton"
+    );
 
-    if (isAuthPage) {
-      setupAuthPage();
+if (toggleSidebarButton) {
+
+    toggleSidebarButton.addEventListener(
+        "click",
+        toggleSidebar
+    );
+
+}
+    const page =
+      document.body.dataset.page;
+
+    if (page === "welcome") {
+      setupWelcomePage();
       return;
     }
 
-    const user =
-      await requireAuthenticatedUser();
+    let profile;
 
-    if (!user) {
+    try {
+      profile = await fetchProfile();
+    } catch (error) {
+      document.body.innerHTML = `
+        <main class="app-startup-error">
+          <h1>Unable to start Chapters.</h1>
+          <p>Please restart the application.</p>
+        </main>
+      `;
       return;
     }
 
-    renderAuthenticatedHeader(user);
+    if (!profile) {
+      window.location.href = "/welcome.html";
+      return;
+    }
+
+    renderProfileHeader(profile);
+
+
+    renderInitialLoadingStates();
+
+
+if (toggleSidebarButton) {
+
+    toggleSidebarButton.addEventListener(
+        "click",
+        toggleSidebar
+    );
+
+}
 
     const journalsContainer =
       document.getElementById("journals");
@@ -185,6 +594,18 @@ document.addEventListener(
         }
 
         openDeleteEntryModal(appState.selectedEntryId);
+      });
+    }
+
+    const entrySearch =
+      document.getElementById("entrySearch");
+
+    if (entrySearch) {
+      entrySearch.addEventListener("input", () => {
+        appState.entrySearchQuery =
+          entrySearch.value.trim();
+
+        renderEntryList(getFilteredEntries());
       });
     }
 
@@ -238,6 +659,8 @@ if (createJournalButton) {
         submitJournalForm
       );
     }
+
+    setupJournalColorPicker();
 
     const entriesContainer =
       document.getElementById("entries");
@@ -317,104 +740,42 @@ if (editorNewButton) {
 
 editorNewButton.addEventListener(
   "click",
-  async () => {
-
-    try {
-
-      const today =
-        new Date()
-          .toISOString()
-          .split("T")[0];
-
-      const entry =
-        await saveEntry({
-
-          journal_id: appState.selectedJournalId,
-
-          title: "Untitled",
-
-          content: "<p></p>",
-
-          entry_date: today
-
-        });
-
-      appState.entries.unshift(entry);
-
-renderEntryList(
-    getFilteredEntries()
+  createNewEntryFromEditor
 );
 
-selectEntry(entry.id);
+}});
+  
 
-    }
 
-    catch (error) {
-
-      console.error(error);
-
-      alert(error.message);
-
-    }
-
-  }
-);
-
-}
-  }
-);
-
-async function requireAuthenticatedUser() {
-  try {
-    return await getCurrentUser();
-  } catch (error) {
-    window.location.href = "/login.html";
-    return null;
-  }
-}
-
-function renderAuthenticatedHeader(user) {
+function renderProfileHeader(profile) {
   const userName =
     document.getElementById("userName");
 
   if (userName) {
-    userName.textContent = `Welcome, ${user.name}`;
+    userName.textContent = `Hello, ${profile.display_name}`;
   }
 
-  const logoutButton =
-    document.getElementById("logoutButton");
+  const avatar =
+    document.querySelector(".user-avatar");
 
-  if (logoutButton) {
-    logoutButton.addEventListener("click", async () => {
-      await logoutUser();
-      window.location.href = "/login.html";
-    });
-  }
-}
-
-async function setupAuthPage() {
-  try {
-    await getCurrentUser();
-    window.location.href = "/";
-    return;
-  } catch (error) {
-    // User is not authenticated yet.
-  }
-
-  const signupForm =
-    document.getElementById("signupForm");
-
-  if (signupForm) {
-    signupForm.addEventListener("submit", submitSignupForm);
-  }
-
-  const loginForm =
-    document.getElementById("loginForm");
-
-  if (loginForm) {
-    loginForm.addEventListener("submit", submitLoginForm);
+  if (avatar) {
+    avatar.textContent =
+      getProfileInitials(profile.display_name);
+    avatar.title = profile.display_name;
   }
 }
+
+function getProfileInitials(name) {
+  return String(name || "C")
+    .trim()
+    .split(/\s+/)
+    .slice(0, 2)
+    .map((part) => part[0])
+    .join("")
+    .toUpperCase();
+}
+
+
 
 function setDefaultEntryDate() {
 
@@ -530,18 +891,18 @@ async function loadEntries() {
 
   const entries = await fetchEntries();
 
-  const filteredEntries =
-    appState.selectedJournalId === "all"
-      ? entries
-      : entries.filter(
-        entry =>
-          entry.journal_id === appState.selectedJournalId
-      );
+const filteredEntries =
+    entries.filter(
+        (entry) =>
+            String(entry.journal_id) ===
+            String(appState.selectedJournalId)
+    );
 
   renderEntries(filteredEntries);
 }
 
 async function loadJournals() {
+  try {
 
   const journals =
     await fetchJournals();
@@ -554,6 +915,15 @@ async function loadJournals() {
 
   appState.entries =
     entries;
+    if (
+    journals.length > 0 &&
+    !appState.selectedJournalId
+) {
+
+    appState.selectedJournalId =
+        journals[0].id;
+
+}
 
   renderEntryList(
     getFilteredEntries()
@@ -563,7 +933,31 @@ async function loadJournals() {
     appState.journals
   );
 
-  console.log(appState.entries);
+  if (appState.journals.length === 0 && appState.entries.length === 0) {
+    renderEditorEmptyState(
+      "Welcome to Chapters",
+      "Start your first journal."
+    );
+  } else {
+    renderEditorEmptyState();
+  }
+
+  } catch (error) {
+    console.error(error);
+
+    const entryList =
+      document.getElementById("entryList");
+
+    if (entryList) {
+      entryList.innerHTML = renderEmptyState({
+        title: "Unable to load entries",
+        description: "Please refresh the page and try again.",
+        icon: "bi-exclamation-triangle"
+      });
+    }
+
+    renderEditorEmptyState("Unable to load editor", "Please refresh the page.");
+  }
 
 }
 
@@ -760,7 +1154,8 @@ async function submitJournalForm(event) {
   try {
     const journal =
       await createJournal({
-        name: document.getElementById("journalName").value
+        name: document.getElementById("journalName").value,
+        color: selectedJournalColor
       });
 
     appState.selectedJournalId = journal.id;
@@ -804,23 +1199,6 @@ function getJournalIdFromUrl() {
   return journalMatch ? journalMatch[1] : null;
 }
 
-async function submitSignupForm(event) {
-  event.preventDefault();
-  clearAuthError();
-
-  try {
-    await signupUser({
-      name: document.getElementById("name").value,
-      email: document.getElementById("email").value,
-      password: document.getElementById("password").value
-    });
-
-    window.location.href = "/";
-  } catch (error) {
-    renderAuthError(error.message);
-  }
-}
-
 function getNotesEditorHtml() {
   if (window.notesEditor) {
     return window.notesEditor.getHTML();
@@ -831,27 +1209,6 @@ function getNotesEditorHtml() {
 
   return notes ? notes.value : "";
 }
-
-async function submitLoginForm(event) {
-  event.preventDefault();
-
-  console.log("Login form submitted");
-
-  clearAuthError();
-
-  try {
-    await loginUser({
-      email: document.getElementById("email").value,
-      password: document.getElementById("password").value
-    });
-
-    window.location.href = "/";
-  } catch (error) {
-    console.error(error);
-    renderAuthError(error.message);
-  }
-}
-
 
 function clearAuthError() {
   const authError =
@@ -926,19 +1283,20 @@ async function removeEntry(id) {
 
 async function selectEntry(entryId) {
 
-  appState.selectedEntryId = entryId;
+  const entry =
+    appState.entries.find(
+      entry => String(entry.id) === String(entryId)
+    );
+
+  appState.selectedEntryId = null;
+
+  loadEntryIntoEditor(entry);
+
+  appState.selectedEntryId = entry ? entry.id : null;
 
   renderEntryList(
     getFilteredEntries()
   );
-
-  const entry =
-    appState.entries.find(
-      entry => entry.id === entryId
-    );
-    console.log(entry);
-
- loadEntryIntoEditor(entry);
 
 }
 window.selectEntry = selectEntry;
@@ -947,29 +1305,66 @@ function loadEntryIntoEditor(entry) {
 
     if (!entry) {
 
-        document.getElementById("editorDate").textContent = "";
-
-        if (window.notesEditor) {
-
-            window.notesEditor.commands.clearContent();
-
-        }
-
+        renderEditorEmptyState();
+        appState.isEditorDirty = false;
         return;
 
     }
+
+    activateEditor();
 
     document.getElementById("editorDate").textContent =
         formatEntryDate(entry.entry_date);
 
     if (window.notesEditor) {
+        const content =
+            entry.content || entry.notes || "<p></p>";
+        const loadedWithGuard =
+            typeof window.loadEditorContent === "function";
 
-        window.notesEditor.commands.setContent(
-            entry.content || "<p></p>"
-        );
+        if (loadedWithGuard) {
+            window.loadEditorContent(content);
+        } else {
+            window.notesEditor.commands.setContent(content);
+            window.notesEditor.commands.focus("start");
+        }
 
-        window.notesEditor.commands.focus("start");
-
+        if (!loadedWithGuard && typeof window.markEditorSaved === "function") {
+          window.markEditorSaved(content);
+        }
     }
 
+    appState.isEditorDirty = false;
+
 }
+
+let selectedJournalColor = "#8B5CF6";
+
+function setupJournalColorPicker() {
+
+  const colorButtons =
+    document.querySelectorAll(".journal-color");
+
+  if (colorButtons.length === 0) {
+    return;
+  }
+
+  colorButtons.forEach((button) => {
+
+   button.addEventListener("click", () => {
+
+  colorButtons.forEach((item) =>
+    item.classList.remove("active")
+  );
+
+  button.classList.add("active");
+
+  selectedJournalColor =
+    button.dataset.color;
+
+});
+
+  });
+
+}
+  

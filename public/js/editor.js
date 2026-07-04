@@ -14,6 +14,10 @@ let autosaveTimer = null;
 let lastSavedContent = "";
 let imageCutMenu = null;
 let activeImageContextTarget = null;
+let isSaving = false;
+let isLoadingEntryContent = false;
+let finishLoadingEntryTimer = null;
+let hasUserEditedSinceLoad = false;
 
 window.notesEditor = null;
 
@@ -94,20 +98,167 @@ function cutActiveImage() {
   }
 
   const position = window.notesEditor.view.posAtDOM(activeImageContextTarget, 0);
+  const { state, dispatch } = window.notesEditor.view;
+  const node = state.doc.nodeAt(position);
 
-  if (typeof position !== "number") {
+  if (typeof position !== "number" || !node) {
     hideImageCutMenu();
     return;
   }
 
-  window.notesEditor
-    .chain()
-    .focus()
-    .setNodeSelection(position)
-    .deleteSelection()
-    .run();
+  dispatch(state.tr.delete(position, position + node.nodeSize));
+  window.notesEditor.commands.focus();
 
   hideImageCutMenu();
+}
+
+function setSaveStatus(state, label) {
+  const saveStatus =
+    document.getElementById("saveStatus");
+
+  if (!saveStatus) {
+    return;
+  }
+
+  saveStatus.textContent = label || "";
+  saveStatus.dataset.state = state || "";
+}
+
+window.markEditorSaved = function markEditorSaved(content) {
+  clearTimeout(autosaveTimer);
+  lastSavedContent = content || "";
+  window.appState.isEditorDirty = false;
+  hasUserEditedSinceLoad = false;
+  setSaveStatus("saved", "Saved");
+};
+
+window.loadEditorContent = function loadEditorContent(content) {
+  if (!window.notesEditor) {
+    return;
+  }
+
+  const nextContent =
+    content || "<p></p>";
+
+  clearTimeout(autosaveTimer);
+  clearTimeout(finishLoadingEntryTimer);
+  isLoadingEntryContent = true;
+  hasUserEditedSinceLoad = false;
+
+  window.notesEditor.commands.setContent(nextContent, {
+    emitUpdate: false
+  });
+  window.notesEditor.commands.focus("start");
+
+  lastSavedContent = window.notesEditor.getHTML();
+  window.appState.isEditorDirty = false;
+  setSaveStatus("saved", "Saved");
+
+  finishLoadingEntryTimer = setTimeout(() => {
+    isLoadingEntryContent = false;
+  }, 150);
+};
+
+function markUserEditIntent() {
+  if (!window.appState?.selectedEntryId) {
+    return;
+  }
+
+  hasUserEditedSinceLoad = true;
+}
+
+function isEditorEmptyHtml(html) {
+  const temp =
+    document.createElement("div");
+
+  temp.innerHTML = html || "";
+
+  return !temp.textContent.trim() && !temp.querySelector("img");
+}
+
+async function saveCurrentEntry({ skipEmpty = true } = {}) {
+  if (
+    isSaving ||
+    isLoadingEntryContent ||
+    !hasUserEditedSinceLoad ||
+    !window.appState?.selectedEntryId ||
+    !window.notesEditor
+  ) {
+    return;
+  }
+
+  const html =
+    window.notesEditor.getHTML();
+
+  if (html === lastSavedContent) {
+    window.appState.isEditorDirty = false;
+    setSaveStatus("saved", "Saved");
+    return;
+  }
+
+  const currentEntry =
+    window.appState.entries.find(
+      entry =>
+        String(entry.id) ===
+        String(window.appState.selectedEntryId)
+    );
+
+  if (!currentEntry) {
+    return;
+  }
+
+  const previousContent =
+    currentEntry.content || "";
+
+  const wasAlreadyEmpty =
+    isEditorEmptyHtml(previousContent);
+
+  if (
+    skipEmpty &&
+    isEditorEmptyHtml(html) &&
+    wasAlreadyEmpty &&
+    (currentEntry.title || "Untitled") === "Untitled"
+  ) {
+    window.appState.isEditorDirty = false;
+    setSaveStatus("saved", "Saved");
+    return;
+  }
+
+  const {
+    title,
+    preview
+  } = extractEntryMetadata(html);
+
+  try {
+    isSaving = true;
+    setSaveStatus("saving", "Saving...");
+
+    await updateEntry(
+      currentEntry.id,
+      {
+        title,
+        preview,
+        content: html
+      }
+    );
+
+    lastSavedContent = html;
+    window.appState.isEditorDirty = false;
+    currentEntry.title = title;
+    currentEntry.preview = preview;
+    currentEntry.content = html;
+
+    window.renderEntryList(
+      window.getFilteredEntries()
+    );
+
+    setSaveStatus("saved", "Saved");
+  } catch (error) {
+    console.error(error);
+    setSaveStatus("failed", "Save failed");
+  } finally {
+    isSaving = false;
+  }
 }
 
 
@@ -156,7 +307,11 @@ onSelectionUpdate: ({ editor }) => {
 onUpdate: ({ editor }) => {
 
     updateToolbar();
-if (!window.appState?.selectedEntryId) {
+if (isLoadingEntryContent || !window.appState?.selectedEntryId) {
+    return;
+}
+
+if (!hasUserEditedSinceLoad) {
     return;
 }
 const html = editor.getHTML();
@@ -166,39 +321,12 @@ const {
     preview
 } = extractEntryMetadata(html);
 
-console.log(typeof updateEntry);
 const currentEntry =
     window.appState.entries.find(
         entry =>
-            entry.id ===
-            window.appState.selectedEntryId
+            String(entry.id) ===
+            String(window.appState.selectedEntryId)
     );
-    clearTimeout(autosaveTimer);
-
-autosaveTimer = setTimeout(async () => {
- if (html === lastSavedContent) {
-        return;
-    }
-    try {
-
-        await updateEntry(
-            currentEntry.id,
-            {
-                title,
-                preview,
-                content: html
-            }
-        );
-
-        console.log("✅ Entry saved");
-
-    } catch (error) {
-
-        console.error(error);
-
-    }
-
-}, 1000);
 
 if (!currentEntry) {
     return;
@@ -207,11 +335,20 @@ if (!currentEntry) {
 currentEntry.title = title;
 currentEntry.preview = preview;
 currentEntry.content = html;
+window.appState.isEditorDirty = html !== lastSavedContent;
+
+if (window.appState.isEditorDirty) {
+  setSaveStatus("saving", "Saving...");
+}
 
 window.renderEntryList(
     window.getFilteredEntries()
 );
 
+clearTimeout(autosaveTimer);
+autosaveTimer = setTimeout(() => {
+  saveCurrentEntry();
+}, 1000);
 
 
 },
@@ -224,11 +361,32 @@ editorProps: {
   });
 
   editorElement.addEventListener("contextmenu", showImageCutMenu);
+  editorElement.addEventListener("beforeinput", markUserEditIntent);
+  editorElement.addEventListener("paste", markUserEditIntent);
+  editorElement.addEventListener("drop", markUserEditIntent);
+  editorElement.addEventListener("compositionend", markUserEditIntent);
+  editorElement.addEventListener(
+    "error",
+    (event) => {
+      if (event.target.tagName !== "IMG") {
+        return;
+      }
+
+      const fallback =
+        document.createElement("span");
+
+      fallback.className = "image-unavailable";
+      fallback.textContent = "Image unavailable";
+      event.target.replaceWith(fallback);
+    },
+    true
+  );
 
   document
     .querySelectorAll("[data-editor-command]")
     .forEach((button) => {
       button.addEventListener("click", () => {
+        markUserEditIntent();
         runEditorCommand(button.dataset.editorCommand);
       });
     });
@@ -286,6 +444,10 @@ lastSavedContent = window.notesEditor.getHTML();
     chain.unsetLink().run();
   }
 }
+
+document
+  .querySelector(".editor-toolbar")
+  ?.addEventListener("click", markUserEditIntent, true);
 
 document
   .getElementById(
@@ -419,6 +581,10 @@ const imageUploadInput =
   document.getElementById("imageUploadInput");
 
 insertImageButton?.addEventListener("click", () => {
+  if (insertImageButton.disabled) {
+    return;
+  }
+
   imageUploadInput?.click();
 });
 
@@ -943,8 +1109,16 @@ async function handleImageUpload(file) {
   }
 
   showImageUploadError("");
+  const previousHtml =
+    insertImageButton?.innerHTML;
 
   try {
+    if (insertImageButton) {
+      insertImageButton.disabled = true;
+      insertImageButton.innerHTML =
+        '<span class="spinner-border spinner-border-sm" aria-hidden="true"></span>';
+    }
+
     const formData = new FormData();
     formData.append("image", file);
 
@@ -953,9 +1127,13 @@ async function handleImageUpload(file) {
     window.notesEditor.chain().focus().setImage({ src: result.url }).run();
     window.notesEditor.commands.focus("end");
   } catch (error) {
-    showImageUploadError(
-      error.message || "Unable to upload image. Please try again."
-    );
+    showImageUploadError("Unable to upload image.<br>Try again.");
+  } finally {
+    if (insertImageButton) {
+      insertImageButton.disabled = false;
+      insertImageButton.innerHTML =
+        previousHtml || '<i class="bi bi-image"></i>';
+    }
   }
 }
 
@@ -970,26 +1148,36 @@ function extractEntryMetadata(html) {
         Array.from(temp.children);
 
     let title = "Untitled";
-
     let preview = "";
 
-    if (blocks.length > 0) {
+    const textBlocks =
+        blocks
+            .map(block => block.textContent.trim())
+            .filter(text => text.length > 0);
+    const hasImage =
+        Boolean(temp.querySelector("img"));
 
-        title =
-            blocks[0].textContent.trim() || "Untitled";
+    if (textBlocks.length > 0) {
+
+        title = textBlocks[0];
 
         preview =
-            blocks
+            textBlocks
                 .slice(1)
-                .map(block => block.textContent.trim())
-                .filter(text => text.length > 0)
                 .join(" ");
-                if (preview.length > 100) {
 
-    preview =
-        preview.substring(0, 100).trim() + "...";
+        if (preview.length > 100) {
 
-}
+            preview =
+                preview.substring(0, 100).trim() + "...";
+
+        }
+
+    }
+
+    else if (hasImage) {
+
+        preview = "Image";
 
     }
 
@@ -999,6 +1187,30 @@ function extractEntryMetadata(html) {
     };
 
 }
+
+document.addEventListener("keydown", (event) => {
+  const isModKey =
+    event.metaKey || event.ctrlKey;
+
+  if (isModKey && event.key.toLowerCase() === "s") {
+    event.preventDefault();
+    saveCurrentEntry({ skipEmpty: false });
+    return;
+  }
+
+  if (isModKey && event.key.toLowerCase() === "k") {
+    event.preventDefault();
+    document.getElementById("linkButton")?.click();
+    return;
+  }
+
+  if (event.key === "Escape") {
+    document
+      .getElementById("linkPopover")
+      ?.classList.add("d-none");
+    hideImageCutMenu();
+  }
+});
 
 
   
