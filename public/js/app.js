@@ -660,6 +660,8 @@ if (createJournalButton) {
       );
     }
 
+    setupJournalColorPicker();
+
     const entriesContainer =
       document.getElementById("entries");
 
@@ -1152,7 +1154,8 @@ async function submitJournalForm(event) {
   try {
     const journal =
       await createJournal({
-        name: document.getElementById("journalName").value
+        name: document.getElementById("journalName").value,
+        color: selectedJournalColor
       });
 
     appState.selectedJournalId = journal.id;
@@ -1332,6 +1335,36 @@ function loadEntryIntoEditor(entry) {
     }
 
     appState.isEditorDirty = false;
+
+}
+
+let selectedJournalColor = "#8B5CF6";
+
+function setupJournalColorPicker() {
+
+  const colorButtons =
+    document.querySelectorAll(".journal-color");
+
+  if (colorButtons.length === 0) {
+    return;
+  }
+
+  colorButtons.forEach((button) => {
+
+   button.addEventListener("click", () => {
+
+  colorButtons.forEach((item) =>
+    item.classList.remove("active")
+  );
+
+  button.classList.add("active");
+
+  selectedJournalColor =
+    button.dataset.color;
+
+});
+
+  });
 
 }
   

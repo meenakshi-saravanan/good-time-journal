@@ -140,19 +140,18 @@ function renderJournals(journals) {
     column.className = "col-md-6 col-lg-4";
 
     column.innerHTML = `
-      <a
-        href="/journals/${journal.id}"
-        class="journal-card card h-100 text-decoration-none text-body"
-      >
-        <div class="card-body">
-          <h2 class="h5 card-title">
-            ${journal.name}
-          </h2>
-          <p class="card-text text-secondary mb-0">
-            ${journal.entry_count} Entries
-          </p>
-        </div>
-      </a>
+    <div class="journal-item-title">
+
+    <span
+        class="journal-color-dot"
+        style="background:${journal.color};">
+    </span>
+
+    <span>
+        ${journal.name}
+    </span>
+
+</div>
     `;
 
     grid.appendChild(column);
@@ -193,9 +192,15 @@ function renderJournalSidebar(journals) {
     button.dataset.journalId =
       journal.id;
 
-    button.innerHTML = `
-      <i class="bi bi-journal-text"></i>
-      <span title="${journal.name}">${journal.name}</span>
+  button.innerHTML = `
+      <span
+        class="journal-sidebar-color"
+        style="background:${journal.color || "#8B5CF6"}">
+      </span>
+
+      <span title="${journal.name}">
+        ${journal.name}
+      </span>
     `;
 
     if (

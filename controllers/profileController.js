@@ -97,9 +97,10 @@ function createStarterContent(callback) {
       db.run(
         `INSERT INTO journals (
           name,
+          color,
           template_type
-        ) VALUES (?, ?)`,
-        [STARTER_JOURNAL_NAME, STARTER_TEMPLATE],
+        ) VALUES (?, ?, ?)`,
+        [STARTER_JOURNAL_NAME, "#8B5CF6", STARTER_TEMPLATE],
         function handleJournalInsert(journalInsertErr) {
           if (journalInsertErr) {
             callback(journalInsertErr);
