@@ -186,6 +186,26 @@ async function deleteEntry(id) {
   }
 }
 
+async function uploadImage(formData) {
+  const response = await fetch("/api/upload", {
+    method: "POST",
+    body: formData
+  });
+
+  const result = await readJsonResponse(
+    response,
+    "Unable to upload image."
+  );
+
+  if (!response.ok) {
+    throw new Error(result.error || "Unable to upload image.");
+  }
+
+  return result;
+}
+
+window.uploadImage = uploadImage;
+
 async function getCurrentUser() {
   const response = await fetch("/api/auth/me");
 

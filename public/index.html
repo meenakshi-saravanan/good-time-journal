@@ -198,6 +198,10 @@
 <button class="editor-icon-button" id="linkButton" type="button">
 <i class="bi bi-link-45deg"></i>
 </button>
+<button class="editor-icon-button" id="insertImageButton" type="button" title="Insert image">
+<i class="bi bi-image"></i>
+</button>
+<input accept="image/png,image/jpeg,image/jpg,image/gif,image/webp" class="d-none" id="imageUploadInput" type="file"/>
 <div class="editor-toolbar-divider"></div>
 <button class="editor-icon-button" id="alignLeftButton" type="button">
 <i class="bi bi-text-left"></i>
@@ -215,6 +219,7 @@
 
 </div>
 </div>
+<div class="mt-2" id="imageUploadError"></div>
 <div class="editor-link-popover d-none" id="linkPopover">
 <input class="editor-link-input" id="linkInput" placeholder="Paste a link..." type="text"/>
 <div class="editor-link-actions">

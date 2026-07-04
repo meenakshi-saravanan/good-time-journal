@@ -1,5 +1,10 @@
 const sqlite3 = require("sqlite3").verbose();
 
+const path = require("path");
+
+console.log("Current working directory:", process.cwd());
+console.log("Database path:", path.resolve("./journal.db"));
+
 const db = new sqlite3.Database("./journal.db", (err) => {
   if (err) {
     console.error(err.message);
@@ -60,12 +65,12 @@ CREATE TABLE IF NOT EXISTS journal_entries (
     ensureColumn(columns, "journal_entries", "title", "TEXT");
     ensureColumn(columns, "journal_entries", "preview", "TEXT");
     ensureColumn(columns, "journal_entries", "content", "TEXT");
-    ensureColumn(
-      columns,
-      "journal_entries",
-      "updated_at",
-      "DATETIME DEFAULT CURRENT_TIMESTAMP"
-    );
+  ensureColumn(
+  columns,
+  "journal_entries",
+  "updated_at",
+  "DATETIME"
+);
   });
 
 
