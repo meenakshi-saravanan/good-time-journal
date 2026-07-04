@@ -91,13 +91,6 @@ async function updateEntry(id, entry) {
 
         });
 
- if (response.status === 401) {
-
-    window.location.href = "/login.html";
-    return;
-
-}
-
 if (!response.ok) {
 
     throw new Error("Unable to update entry.");
@@ -109,11 +102,6 @@ if (!response.ok) {
 
 async function fetchJournals() {
   const response = await fetch("/api/journals");
-
-  if (response.status === 401) {
-    window.location.href = "/login.html";
-    return [];
-  }
 
   return await response.json();
 }
@@ -206,66 +194,38 @@ async function uploadImage(formData) {
 
 window.uploadImage = uploadImage;
 
-async function getCurrentUser() {
-  const response = await fetch("/api/auth/me");
+async function fetchProfile() {
+  const response = await fetch("/api/profile");
+
+  if (response.status === 404) {
+    return null;
+  }
 
   if (!response.ok) {
-    throw new Error("Authentication required.");
+    throw new Error("Unable to load profile.");
   }
 
   return await response.json();
 }
 
-async function signupUser(user) {
-  const response = await fetch("/api/auth/signup", {
+async function createProfile(profile) {
+  const response = await fetch("/api/profile", {
     method: "POST",
     headers: {
       "Content-Type": "application/json"
     },
-    body: JSON.stringify(user)
+    body: JSON.stringify(profile)
   });
 
   const result =
     await readJsonResponse(
       response,
-      "Unable to create account. Please restart the server and try again."
+      "Unable to create your profile."
     );
 
   if (!response.ok) {
-    throw new Error(result.error || "Unable to create account.");
+    throw new Error(result.error || "Unable to create your profile.");
   }
 
   return result;
-}
-
-async function loginUser(credentials) {
-  const response = await fetch("/api/auth/login", {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json"
-    },
-    body: JSON.stringify(credentials)
-  });
-
-  const result =
-    await readJsonResponse(
-      response,
-      "Unable to log in. Please restart the server and try again."
-    );
-
-  if (!response.ok) {
-    throw new Error(result.error || "Unable to log in.");
-  }
-
-  return result;
-}
-
-async function logoutUser() {
-  const response = await fetch("/api/auth/logout", {
-    method: "POST"
-  });
-
-  if (!response.ok) {
-    throw new Error("Unable to log out.");
-  }
 }

@@ -2,7 +2,6 @@ const express = require("express");
 const path = require("path");
 const fs = require("fs");
 const multer = require("multer");
-const requireAuth = require("../middleware/auth");
 
 const router = express.Router();
 const uploadsDir = path.join(__dirname, "..", "uploads");
@@ -40,7 +39,7 @@ const upload = multer({
   }
 });
 
-router.post("/", requireAuth, (req, res) => {
+router.post("/", (req, res) => {
   upload.single("image")(req, res, (err) => {
     if (err) {
       if (err.code === "LIMIT_FILE_SIZE") {

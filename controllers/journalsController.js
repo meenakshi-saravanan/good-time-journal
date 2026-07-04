@@ -4,21 +4,19 @@ const GOOD_TIME_TEMPLATE = "good_time";
 const GOOD_TIME_NAME = "Good Time Journal";
 const STANDARD_TEMPLATE = "standard";
 
-function ensureGoodTimeJournal(userId, callback) {
+function ensureGoodTimeJournal(callback) {
   db.get(
     `SELECT
       id,
-      user_id,
       name,
       template_type,
       created_at
     FROM journals
-    WHERE user_id = ?
-      AND name = ?
+    WHERE name = ?
       AND template_type = ?
     ORDER BY created_at ASC
     LIMIT 1`,
-    [userId, GOOD_TIME_NAME, GOOD_TIME_TEMPLATE],
+    [GOOD_TIME_NAME, GOOD_TIME_TEMPLATE],
     (findErr, existingJournal) => {
       if (findErr) {
         callback(findErr);
@@ -31,7 +29,6 @@ function ensureGoodTimeJournal(userId, callback) {
       }
 
       createJournalRecord(
-        userId,
         GOOD_TIME_NAME,
         GOOD_TIME_TEMPLATE,
         callback
@@ -51,11 +48,9 @@ function getJournals(req, res) {
     FROM journals
     LEFT JOIN journal_entries
       ON journal_entries.journal_id = journals.id
-      AND journal_entries.user_id = journals.user_id
-    WHERE journals.user_id = ?
     GROUP BY journals.id
     ORDER BY journals.created_at ASC`,
-    [req.session.userId],
+    [],
     (err, rows) => {
       if (err) {
         res.status(500).json({ error: "Unable to fetch journals." });
@@ -75,9 +70,8 @@ function getJournal(req, res) {
       template_type,
       created_at
     FROM journals
-    WHERE id = ?
-      AND user_id = ?`,
-    [req.params.id, req.session.userId],
+    WHERE id = ?`,
+    [req.params.id],
     (err, row) => {
       if (err) {
         res.status(500).json({ error: "Unable to fetch journal." });
@@ -94,14 +88,13 @@ function getJournal(req, res) {
   );
 }
 
-function createJournalRecord(userId, name, templateType, callback) {
+function createJournalRecord(name, templateType, callback) {
   db.run(
     `INSERT INTO journals (
-      user_id,
       name,
       template_type
-    ) VALUES (?, ?, ?)`,
-    [userId, name, templateType],
+    ) VALUES (?, ?)`,
+    [name, templateType],
     function handleInsert(err) {
       if (err) {
         callback(err);
@@ -111,14 +104,12 @@ function createJournalRecord(userId, name, templateType, callback) {
       db.get(
         `SELECT
           id,
-          user_id,
           name,
           template_type,
           created_at
         FROM journals
-        WHERE id = ?
-          AND user_id = ?`,
-        [this.lastID, userId],
+        WHERE id = ?`,
+        [this.lastID],
         callback
       );
     }
@@ -134,7 +125,6 @@ function createJournal(req, res) {
   }
 
   createJournalRecord(
-    req.session.userId,
     name.trim(),
     STANDARD_TEMPLATE,
     (err, journal) => {
@@ -162,7 +152,6 @@ function createFromTemplate(req, res) {
   }
 
   createJournalRecord(
-    req.session.userId,
     name.trim(),
     GOOD_TIME_TEMPLATE,
     (err, journal) => {
@@ -177,7 +166,7 @@ function createFromTemplate(req, res) {
 }
 
 function migrateGoodTimeJournal(req, res) {
-  ensureGoodTimeJournal(req.session.userId, (err, journal) => {
+  ensureGoodTimeJournal((err, journal) => {
     if (err) {
       res.status(500).json({ error: "Unable to create journal." });
       return;

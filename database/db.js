@@ -14,191 +14,116 @@ const db = new sqlite3.Database("./journal.db", (err) => {
 });
 
 db.serialize(() => {
-  db.run(`
-    CREATE TABLE IF NOT EXISTS users (
-      id INTEGER PRIMARY KEY AUTOINCREMENT,
-      name TEXT NOT NULL,
-      email TEXT NOT NULL UNIQUE,
-      password_hash TEXT NOT NULL,
-      created_at DATETIME DEFAULT CURRENT_TIMESTAMP
-    )
-  `);
-
-  db.run(`
-    CREATE TABLE IF NOT EXISTS journals (
-      id INTEGER PRIMARY KEY AUTOINCREMENT,
-      user_id INTEGER NOT NULL,
-      name TEXT NOT NULL,
-      template_type TEXT NOT NULL,
-      created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-      FOREIGN KEY(user_id) REFERENCES users(id)
-    )
-  `);
-
-  db.run(`
-CREATE TABLE IF NOT EXISTS journal_entries (
-  id INTEGER PRIMARY KEY AUTOINCREMENT,
-  user_id INTEGER NOT NULL,
-  journal_id INTEGER,
-  title TEXT,
-  preview TEXT,
-  content TEXT,
-  entry_date TEXT NOT NULL,
-  activity TEXT NOT NULL,
-  energy INTEGER,
-  engagement INTEGER,
-  notes TEXT,
-  created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-  updated_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-  FOREIGN KEY(user_id) REFERENCES users(id),
-  FOREIGN KEY(journal_id) REFERENCES journals(id)
-)
-  `);
-
-  db.all("PRAGMA table_info(journal_entries)", (err, columns) => {
+  // Check if journals table exists and has user_id column
+  db.all("PRAGMA table_info(journals)", (err, columns) => {
     if (err) {
-      console.error(err.message);
+      console.error("Error checking journals table info:", err.message);
       return;
     }
 
-    ensureColumn(columns, "journal_entries", "journal_id", "INTEGER");
-    ensureColumn(columns, "journal_entries", "title", "TEXT");
-    ensureColumn(columns, "journal_entries", "preview", "TEXT");
-    ensureColumn(columns, "journal_entries", "content", "TEXT");
-  ensureColumn(
-  columns,
-  "journal_entries",
-  "updated_at",
-  "DATETIME"
-);
-  });
+    const hasUserId = columns && columns.some((col) => col.name === "user_id");
 
+    if (hasUserId) {
+      console.log("Migration needed: user_id found in journals table.");
 
-  db.all("PRAGMA index_list(journals)", (err, indexes) => {
-    if (err) {
-      console.error(err.message);
-      return;
-    }
+      db.serialize(() => {
+        db.run("PRAGMA foreign_keys = OFF;");
 
-    const hasTemplateUniqueIndex =
-      indexes.some((index) => index.unique && index.origin === "u");
-
-    if (!hasTemplateUniqueIndex) {
-      return;
-    }
-
-    db.serialize(() => {
-      db.run(`
-        CREATE TABLE IF NOT EXISTS journals_next (
+        db.run(`CREATE TABLE IF NOT EXISTS journals_new (
           id INTEGER PRIMARY KEY AUTOINCREMENT,
-          user_id INTEGER NOT NULL,
           name TEXT NOT NULL,
           template_type TEXT NOT NULL,
+          created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+        )`);
+
+        db.run(`INSERT INTO journals_new (id, name, template_type, created_at)
+                SELECT id, name, template_type, created_at FROM journals`);
+
+        db.run(`CREATE TABLE IF NOT EXISTS journal_entries_new (
+          id INTEGER PRIMARY KEY AUTOINCREMENT,
+          journal_id INTEGER NOT NULL,
+          title TEXT,
+          preview TEXT,
+          content TEXT,
+          entry_date TEXT NOT NULL,
+          activity TEXT NOT NULL,
+          energy INTEGER,
+          engagement INTEGER,
+          notes TEXT,
           created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-          FOREIGN KEY(user_id) REFERENCES users(id)
-        )
-      `);
+          updated_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+          FOREIGN KEY(journal_id) REFERENCES journals(id) ON DELETE CASCADE
+        )`);
 
-      db.run(`
-        INSERT OR IGNORE INTO journals_next (
-          id,
-          user_id,
-          name,
-          template_type,
-          created_at
-        )
-        SELECT
-          id,
-          user_id,
-          name,
-          template_type,
-          created_at
-        FROM journals
-      `);
+        db.run(`INSERT INTO journal_entries_new (
+                  id, journal_id, title, preview, content, entry_date,
+                  activity, energy, engagement, notes, created_at, updated_at
+                )
+                SELECT
+                  id, COALESCE(journal_id, 1), title, preview, content, entry_date,
+                  activity, energy, engagement, notes, created_at, updated_at
+                FROM journal_entries`);
 
-      db.run("DROP TABLE journals");
-      db.run("ALTER TABLE journals_next RENAME TO journals");
-    });
-  });
+        db.run("DROP TABLE journal_entries");
+        db.run("DROP TABLE journals");
+        db.run("DROP TABLE IF EXISTS users");
 
-  db.all(
-    `SELECT DISTINCT user_id AS id
-    FROM journal_entries
-    WHERE user_id IS NOT NULL
-      AND journal_id IS NULL`,
-    (err, users) => {
-    if (err) {
-      console.error(err.message);
-      return;
-    }
+        db.run("ALTER TABLE journals_new RENAME TO journals");
+        db.run("ALTER TABLE journal_entries_new RENAME TO journal_entries");
 
-    users.forEach((user) => {
-      db.run(
-        `INSERT OR IGNORE INTO journals (
-          user_id,
-          name,
-          template_type
-        ) VALUES (?, ?, ?)`,
-        [user.id, "Good Time Journal", "good_time"],
-        (insertErr) => {
-          if (insertErr) {
-            console.error(insertErr.message);
-            return;
+        db.run("PRAGMA foreign_keys = ON;", (pragmaErr) => {
+          if (pragmaErr) {
+            console.error("Error enabling foreign keys:", pragmaErr.message);
+          } else {
+            console.log("Database migration complete.");
           }
-
-          db.get(
-            `SELECT id
-            FROM journals
-            WHERE user_id = ?
-              AND template_type = ?`,
-            [user.id, "good_time"],
-            (journalErr, journal) => {
-              if (journalErr) {
-                console.error(journalErr.message);
-                return;
-              }
-
-              if (!journal) {
-                return;
-              }
-
-              db.run(
-                `UPDATE journal_entries
-                SET journal_id = ?
-                WHERE user_id = ?
-                  AND journal_id IS NULL`,
-                [journal.id, user.id],
-                (updateErr) => {
-                  if (updateErr) {
-                    console.error(updateErr.message);
-                  }
-                }
-              );
-            }
-          );
-        }
-      );
-    });
+          initializeNewSchema();
+        });
+      });
+    } else {
+      initializeNewSchema();
     }
-  );
+  });
 });
 
-function ensureColumn(columns, tableName, columnName, definition) {
-  const hasColumn =
-    columns.some((column) => column.name === columnName);
+function initializeNewSchema() {
+  db.serialize(() => {
+    db.run(`
+      CREATE TABLE IF NOT EXISTS profile (
+        id INTEGER PRIMARY KEY CHECK (id = 1),
+        display_name TEXT NOT NULL,
+        created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+      )
+    `);
 
-  if (hasColumn) {
-    return;
-  }
+    db.run(`
+      CREATE TABLE IF NOT EXISTS journals (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        name TEXT NOT NULL,
+        template_type TEXT NOT NULL,
+        created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+      )
+    `);
 
-  db.run(
-    `ALTER TABLE ${tableName} ADD COLUMN ${columnName} ${definition}`,
-    (err) => {
-      if (err) {
-        console.error(err.message);
-      }
-    }
-  );
+    db.run(`
+      CREATE TABLE IF NOT EXISTS journal_entries (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        journal_id INTEGER NOT NULL,
+        title TEXT,
+        preview TEXT,
+        content TEXT,
+        entry_date TEXT NOT NULL,
+        activity TEXT NOT NULL,
+        energy INTEGER,
+        engagement INTEGER,
+        notes TEXT,
+        created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+        updated_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+        FOREIGN KEY(journal_id) REFERENCES journals(id) ON DELETE CASCADE
+      )
+    `);
+  });
 }
 
 module.exports = db;
+

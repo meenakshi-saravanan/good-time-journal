@@ -119,9 +119,11 @@ function renderJournals(journals) {
 
   if (journals.length === 0) {
     container.innerHTML = `
-      <p class="empty-state mb-0">
-        No journals yet.
-      </p>
+      <div class="app-empty-state compact">
+        <i class="bi bi-journal-plus" aria-hidden="true"></i>
+        <h3>No journals yet</h3>
+        <p>Create your first journal.</p>
+      </div>
     `;
     return;
   }
@@ -169,6 +171,15 @@ function renderJournalSidebar(journals) {
 
   container.innerHTML = "";
 
+  if (journals.length === 0) {
+    container.innerHTML = `
+      <div class="sidebar-empty-state">
+        <strong>No journals yet</strong>
+        <span>Create your first journal.</span>
+      </div>
+    `;
+  }
+
   journals.forEach((journal) => {
 
     const button =
@@ -184,7 +195,7 @@ function renderJournalSidebar(journals) {
 
     button.innerHTML = `
       <i class="bi bi-journal-text"></i>
-      <span>${journal.name}</span>
+      <span title="${journal.name}">${journal.name}</span>
     `;
 
     if (
@@ -471,6 +482,47 @@ function truncatePreview(text) {
 
 }
 
+function stripHtml(value) {
+  const temp =
+    document.createElement("div");
+
+  temp.innerHTML = value || "";
+
+  return temp.textContent.trim();
+}
+
+function hasImageContent(entry) {
+  const temp =
+    document.createElement("div");
+
+  temp.innerHTML =
+    entry.content || entry.notes || "";
+
+  return Boolean(temp.querySelector("img"));
+}
+
+function getEntryTitle(entry) {
+  const title =
+    (entry.title || entry.activity || "").trim();
+
+  return title || "Untitled";
+}
+
+function getEntryPreview(entry) {
+  const preview =
+    stripHtml(entry.preview || "");
+
+  if (preview) {
+    return truncatePreview(preview);
+  }
+
+  if (hasImageContent(entry)) {
+    return "Image";
+  }
+
+  return "No preview available";
+}
+
 function renderEntryList(entries) {
 
   const container =
@@ -483,12 +535,46 @@ function renderEntryList(entries) {
   container.innerHTML = "";
 
   if (entries.length === 0) {
+    const hasSearch =
+      window.appState?.entrySearchQuery?.trim().length > 0;
 
-    container.innerHTML = `
-            <div class="text-muted p-4">
-                No entries found.
-            </div>
-        `;
+    const hasEntriesInJournal =
+      typeof getEntriesForSelectedJournal === "function" &&
+      getEntriesForSelectedJournal().length > 0;
+
+    if (hasSearch && hasEntriesInJournal) {
+      container.innerHTML = renderEmptyState({
+        title: "No entries found",
+        description: "Try another keyword.",
+        actionLabel: "Clear Search",
+        actionId: "clearSearchButton",
+        icon: "bi-search"
+      });
+      bindEmptyStateActions();
+      return;
+    }
+
+    if (window.appState?.journals.length === 0) {
+      container.innerHTML = renderEmptyState({
+        title: "Welcome to Chapters",
+        description: "Start your first journal.",
+        actionLabel: "Create Journal",
+        actionId: "emptyCreateJournalButton",
+        icon: "bi-journal-plus"
+      });
+      bindEmptyStateActions();
+      return;
+    }
+
+    container.innerHTML = renderEmptyState({
+      title: "No entries yet",
+      description: "Start writing your first entry.",
+      actionLabel: "New Entry",
+      actionId: "emptyNewEntryButton",
+      icon: "bi-pencil-square"
+    });
+
+    bindEmptyStateActions();
 
     return;
 
@@ -503,21 +589,21 @@ function renderEntryList(entries) {
       "entry-list-item";
 
     // Highlight selected entry
-    if (appState.selectedEntryId === entry.id) {
+    if (String(appState.selectedEntryId) === String(entry.id)) {
       item.classList.add("selected");
     }
 
     item.innerHTML = `
             <div class="entry-card-top">
                 <div class="entry-list-title">
-                    ${entry.title || "Untitled"}
+                    ${getEntryTitle(entry)}
                 </div>
                 <div class="entry-list-time">
                     ${formatEntryTime(entry.updated_at)}
                 </div>
             </div>
             <div class="entry-list-preview">
-                ${truncatePreview(entry.preview)}
+                ${getEntryPreview(entry)}
             </div>
         `;
 

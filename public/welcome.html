@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Login | Chapters</title>
+  <title>Welcome | Chapters</title>
   <link
   rel="icon"
   type="image/svg+xml"
@@ -25,7 +25,7 @@
   <link rel="stylesheet" href="css/style.css">
 </head>
 
-<body data-page="auth">
+<body data-page="welcome">
 
 <div class="container-fluid auth-layout px-0">
   <div class="row g-0">
@@ -48,12 +48,11 @@
         </h1>
 
         <p class="brand-copy">
-          Capture moments, revisit memories, and discover the
-          chapters that shape your life.
+          Chapters is your private writing space for ideas, reflections, plans, and memories. Everything stays on your device.
         </p>
 
         <div class="brand-pillars">
-          Capture &nbsp;♦&nbsp; Reflect &nbsp;♦&nbsp; Revisit
+          Private &nbsp;♦&nbsp; Local First &nbsp;♦&nbsp; Yours Forever
         </div>
 
       </div>
@@ -66,102 +65,57 @@
       <div class="auth-container">
 
         <h1 class="auth-title display-6">
-          Welcome back
+          Welcome to Chapters
         </h1>
 
         <p class="auth-subtitle">
-          Pick up where your story left off.
+          What should we call you?
         </p>
 
-        <div id="authError"></div>
+        <div id="profileError"></div>
 
         <div class="security-message">
          <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-lock-fill" viewBox="0 0 16 16">
   <path fill-rule="evenodd" d="M8 0a4 4 0 0 1 4 4v2.05a2.5 2.5 0 0 1 2 2.45v5a2.5 2.5 0 0 1-2.5 2.5h-7A2.5 2.5 0 0 1 2 13.5v-5a2.5 2.5 0 0 1 2-2.45V4a4 4 0 0 1 4-4m0 1a3 3 0 0 0-3 3v2h6V4a3 3 0 0 0-3-3"/>
 </svg>
           <span>
-            Your journal is private and secure by default.
+            Your journals are stored locally on your device. You remain in complete control of your data.
           </span>
         </div>
 
-        <form id="loginForm">
+        <form id="welcomeForm">
 
           <div class="mb-3">
             <label
-              for="email"
+              for="displayName"
               class="form-label"
             >
-              Email
+              Display Name
             </label>
 
             <input
-              type="email"
-              id="email"
+              type="text"
+              id="displayName"
               class="form-control form-control-lg"
-              placeholder="Enter email"
+              placeholder="Meenakshi"
+              maxlength="40"
+              autocomplete="name"
               required
             >
           </div>
 
-          <div class="mb-4">
-            <label
-              for="password"
-              class="form-label"
-            >
-              Password
-            </label>
-
-            <input
-              type="password"
-              id="password"
-              class="form-control form-control-lg"
-              placeholder="Enter password"
-              required
-            >
-          </div>
+          <p class="auth-subtitle mb-4">
+            We'll use your name to personalize your journal.
+          </p>
 
           <button
             type="submit"
             class="btn btn-primary w-100"
           >
-            Login
+            Continue
           </button>
 
         </form>
-
-        <div class="my-4">
-
-          <div class="d-flex align-items-center">
-
-            <hr class="flex-grow-1">
-
-            <span class="px-3 text-secondary">
-              Or
-            </span>
-
-            <hr class="flex-grow-1">
-
-          </div>
-
-        </div>
-
-        <button
-          type="button"
-          class="btn btn-light border w-100 google-btn"
-        >
-          <i class="bi bi-google me-2"></i>
-          Continue with Google
-        </button>
-
-        <p class="text-center mt-4 mb-0">
-
-          Don't have an account?
-
-          <a href="/signup.html">
-            Sign up
-          </a>
-
-        </p>
 
       </div>
 

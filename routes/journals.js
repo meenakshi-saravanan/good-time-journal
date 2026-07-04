@@ -1,10 +1,7 @@
 const express = require("express");
 const journalsController = require("../controllers/journalsController");
-const requireAuth = require("../middleware/auth");
 
 const router = express.Router();
-
-router.use(requireAuth);
 
 router.get("/", journalsController.getJournals);
 router.post("/", journalsController.createJournal);

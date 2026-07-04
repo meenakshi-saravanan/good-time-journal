@@ -3,11 +3,11 @@ const db = require("../database/db");
 
 function getEntries(req, res) {
   const { journal_id } = req.query;
-  const params = [req.session.userId];
+  const params = [];
   let journalFilter = "";
 
   if (journal_id) {
-    journalFilter = "AND journal_id = ?";
+    journalFilter = "WHERE journal_id = ?";
     params.push(journal_id);
   }
 
@@ -21,13 +21,13 @@ function getEntries(req, res) {
       entry_date,
       activity,
       energy,
+      energy,
       engagement,
       notes,
       created_at,
       updated_at
     FROM journal_entries
-    WHERE user_id = ?
-      ${journalFilter}
+    ${journalFilter}
     ORDER BY entry_date DESC, created_at DESC`,
     params,
     (err, rows) => {
@@ -57,9 +57,8 @@ function getEntry(req, res) {
       created_at,
       updated_at
     FROM journal_entries
-    WHERE id = ?
-      AND user_id = ?`,
-    [req.params.id, req.session.userId],
+    WHERE id = ?`,
+    [req.params.id],
     (err, row) => {
       if (err) {
         res.status(500).json({ error: "Unable to fetch journal entry." });
@@ -77,7 +76,7 @@ function getEntry(req, res) {
 }
 
 function createEntry(req, res) {
-    console.log("✅ NEW createEntry() is running");
+  console.log("✅ NEW createEntry() is running");
   console.log(req.body);
   const {
     journal_id,
@@ -100,9 +99,8 @@ function createEntry(req, res) {
       id,
       template_type
     FROM journals
-    WHERE id = ?
-      AND user_id = ?`,
-    [journal_id, req.session.userId],
+    WHERE id = ?`,
+    [journal_id],
     (journalErr, journal) => {
       if (journalErr) {
         console.error(journalErr);
@@ -128,8 +126,6 @@ function createEntry(req, res) {
         return;
       }
 
-    
-
       const entryDate =
         entry_date || new Date().toISOString().split("T")[0];
 
@@ -147,7 +143,6 @@ function createEntry(req, res) {
 
       db.run(
         `INSERT INTO journal_entries (
-          user_id,
           journal_id,
           title,
           preview,
@@ -157,9 +152,8 @@ function createEntry(req, res) {
           energy,
           engagement,
           notes
-        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
         [
-          req.session.userId,
           journal_id,
           title || null,
           preview,
@@ -179,7 +173,6 @@ function createEntry(req, res) {
 
           res.status(201).json({
             id: this.lastID,
-            user_id: req.session.userId,
             journal_id,
             title: title || null,
             preview,
@@ -198,68 +191,59 @@ function createEntry(req, res) {
 }
 
 function updateEntry(req, res) {
+  const {
+    title,
+    preview,
+    content
+  } = req.body;
 
-    const {
-        title,
-        preview,
-        content
-    } = req.body;
+  db.run(
+    `UPDATE journal_entries
+     SET
+        title = ?,
+        preview = ?,
+        content = ?,
+        updated_at = CURRENT_TIMESTAMP
+     WHERE id = ?`,
+    [
+      title,
+      preview,
+      content,
+      req.params.id
+    ],
+    function (err) {
+      if (err) {
+        console.error(err);
+        return res.status(500).json({
+          error: "Unable to update entry."
+        });
+      }
 
-    db.run(
-        `UPDATE journal_entries
-         SET
-            title = ?,
-            preview = ?,
-            content = ?,
-            updated_at = CURRENT_TIMESTAMP
-         WHERE id = ?
-           AND user_id = ?`,
-        [
-            title,
-            preview,
-            content,
-            req.params.id,
-            req.session.userId
-        ],
-        function (err) {
+      if (this.changes === 0) {
+        return res.status(404).json({
+          error: "Entry not found."
+        });
+      }
 
-            if (err) {
-                console.error(err);
-
-                return res.status(500).json({
-                    error: "Unable to update entry."
-                });
-            }
-
-            if (this.changes === 0) {
-
-                return res.status(404).json({
-                    error: "Entry not found."
-                });
-
-            }
-
-            res.json({
-                success: true,
-                updated_at: new Date().toISOString()
-            });
-
-        }
-    );
-
+      res.json({
+        success: true,
+        updated_at: new Date().toISOString()
+      });
+    }
+  );
 }
+
 function deleteEntry(req, res) {
   db.run(
     `DELETE FROM journal_entries
-    WHERE id = ?
-      AND user_id = ?`,
-    [req.params.id, req.session.userId],
+    WHERE id = ?`,
+    [req.params.id],
     function handleDelete(err) {
-     if (err) {
-  console.error(err);
-  res.status(500).json({ error: err.message });
-  return;
-}
+      if (err) {
+        console.error(err);
+        res.status(500).json({ error: err.message });
+        return;
+      }
 
       if (this.changes === 0) {
         res.status(404).json({ error: "Journal entry not found." });
@@ -272,11 +256,11 @@ function deleteEntry(req, res) {
 }
 
 module.exports = {
-    getEntries,
-    getEntry,
-    createEntry,
-    updateEntry,
-    deleteEntry
+  getEntries,
+  getEntry,
+  createEntry,
+  updateEntry,
+  deleteEntry
 };
 
 function createPreview(value) {
