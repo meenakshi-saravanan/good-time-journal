@@ -977,15 +977,20 @@ position: relative;
 .sidebar-heading-row {
 
     display: flex;
-
     justify-content: space-between;
-
     align-items: center;
-
-    padding: 0 16px;
-
     margin-bottom: 12px;
+    border-bottom: 1px solid #F3F4F6;
 
+}
+
+.sidebar-heading
+{
+      padding: 24px 0px 24px;
+      letter-spacing: 0.08em;
+      font-size: 12px!important;
+      color: #a8a7a7!important;
+      text-decoration: uppercase;
 }
 
 .sidebar-add-button {
