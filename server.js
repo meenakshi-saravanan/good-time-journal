@@ -22,6 +22,7 @@ app.use("/api/journals", journalsRoutes);
 app.use("/api/journal", journalRoutes);
 app.use("/api/upload", uploadRoutes);
 
+
 app.get("/login.html", (req, res) => {
   res.redirect("/welcome.html");
 });

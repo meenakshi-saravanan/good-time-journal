@@ -199,11 +199,92 @@ function migrateGoodTimeJournal(req, res) {
   });
 }
 
+function updateJournal(req, res) {
+
+  const { name, color } = req.body;
+
+  if (!name || !color) {
+    return res.status(400).json({
+      error: "Journal name and color are required."
+    });
+  }
+
+  db.run(
+    `
+    UPDATE journals
+    SET
+      name = ?,
+      color = ?
+    WHERE id = ?
+    `,
+    [name, color, req.params.id],
+    function (err) {
+
+      if (err) {
+        return res.status(500).json({
+          error: "Unable to update journal."
+        });
+      }
+
+      if (this.changes === 0) {
+        return res.status(404).json({
+          error: "Journal not found."
+        });
+      }
+
+      res.json({
+        id: Number(req.params.id),
+        name,
+        color
+      });
+
+    }
+  );
+
+}
+
+function deleteJournal(req, res) {
+  console.log("DELETE request for journal:", req.params.id);
+  console.log("🔥 DELETE CONTROLLER CALLED");
+
+  db.run(
+    `
+    DELETE FROM journals
+    WHERE id = ?
+    `,
+    [req.params.id],
+    function (err) {
+
+      if (err) {
+        console.error(err);
+
+        return res.status(500).json({
+          error: "Unable to delete journal."
+        });
+      }
+
+      if (this.changes === 0) {
+        return res.status(404).json({
+          error: "Journal not found."
+        });
+      }
+
+      res.json({
+        success: true
+      });
+
+    }
+  );
+
+}
+
 module.exports = {
   getJournals,
   getJournal,
   createJournal,
   createFromTemplate,
   migrateGoodTimeJournal,
+  updateJournal,
+   deleteJournal,
   ensureGoodTimeJournal
 };

@@ -147,6 +147,9 @@ function getFilteredEntries() {
 window.getFilteredEntries = getFilteredEntries;
 
 let pendingDeleteEntryId = null;
+let pendingDeleteJournalId = null;
+let activeJournalId = null;
+let editingJournalId = null;
 
 function getEntriesForSelectedJournal() {
 
@@ -487,7 +490,74 @@ async function confirmDeleteEntry() {
   }
 }
 window.confirmDeleteEntry = confirmDeleteEntry;
+async function confirmDeleteJournal() {
 
+    if (!pendingDeleteJournalId) {
+        return;
+    }
+
+    const button =
+        document.getElementById(
+            "confirmDeleteJournalButton"
+        );
+
+    button.disabled = true;
+    button.textContent = "Deleting...";
+
+    try {
+
+        await deleteJournal(
+            pendingDeleteJournalId
+        );
+
+        pendingDeleteJournalId = null;
+
+        bootstrap.Modal
+            .getInstance(
+                document.getElementById(
+                    "deleteJournalModal"
+                )
+            )
+            .hide();
+
+        await loadJournals();
+
+        if (appState.journals.length > 0) {
+
+            selectJournal(
+                appState.journals[0].id
+            );
+
+        }
+        else {
+
+            renderEditorEmptyState(
+                "Welcome to Chapters",
+                "Start your first journal."
+            );
+
+        }
+
+    }
+    catch (error) {
+
+        document.getElementById(
+            "deleteJournalError"
+        ).innerHTML = `
+            <div class="alert alert-danger">
+                Unable to delete journal.
+            </div>
+        `;
+
+    }
+    finally {
+
+        button.disabled = false;
+        button.textContent = "Delete Journal";
+
+    }
+
+}
 function selectJournal(journalId) {
 
   appState.selectedJournalId = journalId;
@@ -512,7 +582,29 @@ function selectJournal(journalId) {
   loadEntryIntoEditor(null);
 
 }
+function openJournalContextMenu(button, journalId) {
 
+    activeJournalId = journalId;
+
+    const menu = document.getElementById("journalContextMenu");
+
+    const rect = button.getBoundingClientRect();
+
+    menu.style.left = `${rect.right + 8}px`;
+    menu.style.top = `${rect.top}px`;
+
+    menu.classList.add("show");
+
+}
+
+function closeJournalContextMenu() {
+
+    document
+        .getElementById("journalContextMenu")
+        .classList
+        .remove("show");
+
+}
 document.addEventListener(
   "DOMContentLoaded",
   async () => {
@@ -522,14 +614,7 @@ document.addEventListener(
         "toggleSidebarButton"
     );
 
-if (toggleSidebarButton) {
 
-    toggleSidebarButton.addEventListener(
-        "click",
-        toggleSidebar
-    );
-
-}
     const page =
       document.body.dataset.page;
 
@@ -621,19 +706,10 @@ if (toggleSidebarButton) {
 
 if (createJournalButton) {
 
-    createJournalButton.addEventListener(
-        "click",
-        () => {
-
-            const modal =
-                new bootstrap.Modal(
-                    document.getElementById("createJournalModal")
-                );
-
-            modal.show();
-
-        }
-    );
+  createJournalButton.addEventListener(
+    "click",
+    openCreateJournalModal
+);
 
 }
     const journalTitle =
@@ -659,6 +735,8 @@ if (createJournalButton) {
         submitJournalForm
       );
     }
+
+   
 
     setupJournalColorPicker();
 
@@ -736,14 +814,95 @@ if (createJournalButton) {
     const editorNewButton =
   document.getElementById("editorNewButton");
 
+
+
 if (editorNewButton) {
 
-editorNewButton.addEventListener(
-  "click",
-  createNewEntryFromEditor
+    editorNewButton.addEventListener(
+        "click",
+        createNewEntryFromEditor
+    );
+
+}
+
+const confirmDeleteJournalButton =
+    document.getElementById(
+        "confirmDeleteJournalButton"
+    );
+
+if (confirmDeleteJournalButton) {
+
+    confirmDeleteJournalButton.addEventListener(
+        "click",
+        confirmDeleteJournal
+    );
+
+}
+
+const deleteJournalAction =
+    document.getElementById(
+        "deleteJournalAction"
+    );
+
+if (deleteJournalAction) {
+
+    deleteJournalAction.addEventListener(
+        "click",
+        (event) => {
+
+            event.stopPropagation();
+
+            closeJournalContextMenu();
+
+            pendingDeleteJournalId =
+                activeJournalId;
+
+            new bootstrap.Modal(
+                document.getElementById(
+                    "deleteJournalModal"
+                )
+            ).show();
+
+        }
+    );
+
+}
+
+document.addEventListener(
+    "click",
+    () => {
+
+        closeJournalContextMenu();
+
+    }
 );
 
-}});
+document
+    .getElementById("journalContextMenu")
+    ?.addEventListener(
+        "click",
+        (event) => {
+
+            event.stopPropagation();
+
+        }
+    );
+
+document
+    .getElementById("journalSettingsAction")
+    ?.addEventListener(
+        "click",
+        () => {
+
+            console.log("Journal Settings clicked");
+            console.log("Active Journal:", activeJournalId);
+
+            closeJournalContextMenu();
+
+            openEditJournalModal(activeJournalId);
+
+        }
+    );
   
 
 
@@ -764,6 +923,7 @@ function renderProfileHeader(profile) {
     avatar.title = profile.display_name;
   }
 }
+});
 
 function getProfileInitials(name) {
   return String(name || "C")
@@ -1151,35 +1311,59 @@ async function submitJournalForm(event) {
     errorContainer.innerHTML = "";
   }
 
-  try {
-    const journal =
-      await createJournal({
-        name: document.getElementById("journalName").value,
-        color: selectedJournalColor
-      });
+ try {
 
-    appState.selectedJournalId = journal.id;
+    let journal;
 
-await loadJournals();
+    if (editingJournalId) {
 
-selectJournal(journal.id);
+        journal =
+            await updateJournal(
+                editingJournalId,
+                {
+                    name: document.getElementById("journalName").value.trim(),
+                    color: selectedJournalColor
+                }
+            );
 
-document.getElementById("journalForm").reset();
+    } else {
 
-bootstrap.Modal
-  .getInstance(
-    document.getElementById("createJournalModal")
-  )
-  .hide();
-  } catch (error) {
-    if (errorContainer) {
-      errorContainer.innerHTML = `
-        <div class="alert alert-danger" role="alert">
-          ${error.message}
-        </div>
-      `;
+        journal =
+            await createJournal({
+                name: document.getElementById("journalName").value.trim(),
+                color: selectedJournalColor
+            });
+
     }
-  }
+
+    editingJournalId = null;
+
+    await loadJournals();
+
+    selectJournal(journal.id);
+
+    document.getElementById("journalForm").reset();
+
+    bootstrap.Modal
+        .getInstance(
+            document.getElementById("createJournalModal")
+        )
+        .hide();
+
+}
+catch (error) {
+
+    if (errorContainer) {
+
+        errorContainer.innerHTML = `
+            <div class="alert alert-danger" role="alert">
+                ${error.message}
+            </div>
+        `;
+
+    }
+
+} 
 }
 
 function getJournalIdFromUrl() {
@@ -1340,31 +1524,119 @@ function loadEntryIntoEditor(entry) {
 
 let selectedJournalColor = "#8B5CF6";
 
+function openEditJournalModal(journalId) {
+
+    const journal =
+        appState.journals.find(
+            (item) => String(item.id) === String(journalId)
+        );
+
+    if (!journal) {
+        return;
+    }
+
+    configureJournalModal(
+        "edit",
+        journal
+    );
+
+    new bootstrap.Modal(
+        document.getElementById("createJournalModal")
+    ).show();
+
+}
+
+
+function configureJournalModal(mode, journal = null) {
+
+    const isEdit =
+        mode === "edit";
+
+    editingJournalId =
+        isEdit ? journal.id : null;
+
+    document.getElementById("journalForm").reset();
+
+    document.getElementById(
+        "journalError"
+    ).innerHTML = "";
+
+    selectedJournalColor =
+        isEdit
+            ? journal.color
+            : "#8B5CF6";
+
+    document
+        .querySelectorAll(".journal-color")
+        .forEach((button) => {
+
+            button.classList.toggle(
+                "active",
+                button.dataset.color === selectedJournalColor
+            );
+
+        });
+
+    document.getElementById(
+        "journalName"
+    ).value =
+        isEdit
+            ? journal.name
+            : "";
+
+    document.getElementById(
+        "createJournalModalTitle"
+    ).textContent =
+        isEdit
+            ? "Edit Journal"
+            : "Create Journal";
+
+    document.getElementById(
+        "saveJournalButton"
+    ).textContent =
+        isEdit
+            ? "Save Changes"
+            : "Create Journal";
+
+}
+
+function openCreateJournalModal() {
+
+    configureJournalModal("create");
+
+    new bootstrap.Modal(
+        document.getElementById("createJournalModal")
+    ).show();
+
+}
+
 function setupJournalColorPicker() {
 
-  const colorButtons =
-    document.querySelectorAll(".journal-color");
+    const colorButtons =
+        document.querySelectorAll(".journal-color");
 
-  if (colorButtons.length === 0) {
-    return;
-  }
+    if (colorButtons.length === 0) {
+        return;
+    }
 
-  colorButtons.forEach((button) => {
+    colorButtons.forEach((button) => {
 
-   button.addEventListener("click", () => {
+        button.addEventListener("click", () => {
 
-  colorButtons.forEach((item) =>
-    item.classList.remove("active")
-  );
+            colorButtons.forEach((item) =>
+                item.classList.remove("active")
+            );
 
-  button.classList.add("active");
+            button.classList.add("active");
 
-  selectedJournalColor =
-    button.dataset.color;
+            selectedJournalColor =
+                button.dataset.color;
 
-});
+        });
 
-  });
+    });
 
 }
   
+
+
