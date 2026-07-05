@@ -620,12 +620,14 @@ body.sidebar-collapsed .chapters-layout {
 .sidebar-top {
     flex: 1;
     min-height: 0;
-    overflow: hidden;
+    overflow: visible;
 }
 
 #journalList {
     overflow-y: auto;
+    overflow-x: visible;
     min-height: 0;
+    position: relative;
 }
 
 .sidebar-heading-row {
@@ -642,32 +644,43 @@ body.sidebar-collapsed .chapters-layout {
 }
 
 .sidebar-item {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
 
     width: 100%;
 
-    display: flex;
-    align-items: center;
-    gap: 12px;
+    padding: 10px 14px;
 
-    padding: 12px;
+    border-radius: 8px;
 
-    border: none;
-    border-radius: 10px;
-
-    background: transparent;
-
-    transition: .15s ease;
-
-    text-align: left;
-
-    color: #374151;
+    cursor: pointer;
 }
 
-.sidebar-item span {
+.sidebar-item-content {
+
+    display: flex;
+
+    align-items: center;
+
+    gap: 10px;
+
+    flex: 1;
+
     min-width: 0;
+
+}
+
+.sidebar-item-title {
+
+    flex: 1;
+
     overflow: hidden;
+
     text-overflow: ellipsis;
+
     white-space: nowrap;
+
 }
 
 .sidebar-item:hover {
@@ -678,6 +691,55 @@ body.sidebar-collapsed .chapters-layout {
     background: #efe8ff;
     color: #7c3aed;
     font-weight: 600;
+}
+
+.journal-actions-button {
+
+    width: 28px;
+
+    height: 28px;
+
+    display: flex;
+
+    align-items: center;
+
+    justify-content: center;
+
+    border: none;
+
+    background: transparent;
+
+    border-radius: 6px;
+
+    flex-shrink: 0;
+
+    opacity: 0;
+    visibility: hidden;
+    pointer-events: none;
+
+    transition: opacity 0.15s ease, background-color 0.15s ease;
+
+    position: relative;
+
+}
+
+.sidebar-item:hover .journal-actions-button {
+    opacity: 1;
+    visibility: visible;
+    pointer-events: auto;
+}
+
+.journal-actions.show .journal-actions-button,
+.dropdown.show .journal-actions-button {
+    opacity: 1;
+    visibility: visible;
+    pointer-events: auto;
+}
+
+.journal-actions-button:hover {
+
+    background: rgba(0,0,0,.06);
+
 }
 
 /* ---------- Journal Panel ---------- */
@@ -1581,5 +1643,97 @@ body.sidebar-collapsed .journal-sidebar-color {
     height: 18px;
 
     min-width: 18px;
+
+}
+
+
+/* ==========================================================
+   Journal context menu
+   ========================================================== */
+
+   .journal-actions{
+
+    position:relative;
+
+}
+
+.journal-context-menu{
+
+    position:fixed;
+
+    width:220px;
+
+    background:white;
+
+    border:1px solid #ECECEC;
+
+    border-radius:12px;
+
+    box-shadow:
+        0 12px 32px rgba(0,0,0,.15);
+
+    padding:8px;
+
+    display:none;
+
+    z-index:3000;
+
+}
+
+.journal-context-menu.show{
+
+    display:block;
+
+}
+
+.journal-context-menu button{
+
+    width:100%;
+
+    display:flex;
+
+    align-items:center;
+
+    gap:12px;
+
+    border:none;
+
+    background:transparent;
+
+    padding:12px;
+
+    border-radius:8px;
+
+    cursor:pointer;
+
+    text-align:left;
+
+}
+
+.journal-context-menu button:hover{
+
+    background:#F5F3FF;
+
+}
+
+.journal-context-menu button:hover{
+
+    background:#F5F3FF;
+
+}
+
+.journal-context-divider{
+
+    height:1px;
+
+    background:#ECECEC;
+
+    margin:8px 0;
+
+}
+
+.delete-journal-button{
+
+    color:#DC3545;
 
 }

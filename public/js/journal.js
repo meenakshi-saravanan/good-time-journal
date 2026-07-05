@@ -161,65 +161,95 @@ function renderJournals(journals) {
 }
 function renderJournalSidebar(journals) {
 
-  const container =
-    document.getElementById("journalList");
+    const container =
+        document.getElementById("journalList");
 
-  if (!container) {
-    return;
-  }
-
-  container.innerHTML = "";
-
-  if (journals.length === 0) {
-    container.innerHTML = `
-      <div class="sidebar-empty-state">
-        <strong>No journals yet</strong>
-        <span>Create your first journal.</span>
-      </div>
-    `;
-  }
-
-  journals.forEach((journal) => {
-
-    const button =
-      document.createElement("button");
-
-    button.type = "button";
-
-    button.className =
-      "sidebar-item";
-
-    button.dataset.journalId =
-      journal.id;
-
-  button.innerHTML = `
-      <span
-        class="journal-sidebar-color"
-        style="background:${journal.color || "#8B5CF6"}">
-      </span>
-
-      <span title="${journal.name}">
-        ${journal.name}
-      </span>
-    `;
-
-    if (
-      appState.selectedJournalId === journal.id
-    ) {
-      button.classList.add("active");
+    if (!container) {
+        return;
     }
-    button.addEventListener("click", () => {
 
-      selectJournal(journal.id);
+    container.innerHTML = "";
+
+    if (journals.length === 0) {
+
+        container.innerHTML = `
+            <div class="sidebar-empty-state">
+                <strong>No journals yet</strong>
+                <span>Create your first journal.</span>
+            </div>
+        `;
+
+        return;
+
+    }
+
+    journals.forEach((journal) => {
+
+        const item =
+            document.createElement("div");
+
+        item.className = "sidebar-item";
+
+        item.dataset.journalId = journal.id;
+
+        item.innerHTML = `
+            <div class="sidebar-item-content">
+
+                <span
+                    class="journal-sidebar-color"
+                    style="background:${journal.color || "#8B5CF6"}">
+                </span>
+
+                <span
+                    class="sidebar-item-title"
+                    title="${journal.name}">
+                    ${journal.name}
+                </span>
+
+            </div>
+
+            <div class="journal-actions">
+
+                <button
+                    class="journal-actions-button"
+                    type="button">
+
+                    <i class="bi bi-three-dots"></i>
+
+                </button>
+
+            </div>
+        `;
+
+        if (appState.selectedJournalId === journal.id) {
+            item.classList.add("active");
+        }
+
+        const actionsButton =
+            item.querySelector(".journal-actions-button");
+
+        actionsButton.addEventListener("click", (event) => {
+
+            event.stopPropagation();
+
+            openJournalContextMenu(
+                actionsButton,
+                journal.id
+            );
+
+        });
+
+        item.addEventListener("click", () => {
+
+            selectJournal(journal.id);
+
+        });
+
+        container.appendChild(item);
 
     });
 
-    container.appendChild(button);
-
-  });
-
-
-  }
+}
 
 function renderTemplates() {
   const container =

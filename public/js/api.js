@@ -116,6 +116,23 @@ async function fetchJournal(id) {
   return await response.json();
 }
 
+async function deleteJournal(journalId) {
+
+    const response = await fetch(
+        `/api/journals/${journalId}`,
+        {
+            method: "DELETE"
+        }
+    );
+
+    if (!response.ok) {
+        throw new Error("Unable to delete journal.");
+    }
+
+    return response.json();
+
+}
+
 async function createJournalFromTemplate(journal) {
   const response = await fetch("/api/journals/from-template", {
     method: "POST",
@@ -158,6 +175,37 @@ async function createJournal(journal) {
   }
 
   return result;
+}
+
+async function updateJournal(journalId, journal) {
+
+  const response =
+    await fetch(`/api/journals/${journalId}`, {
+
+      method: "PUT",
+
+      headers: {
+        "Content-Type": "application/json"
+      },
+
+      body: JSON.stringify(journal)
+
+    });
+
+  const result =
+    await readJsonResponse(
+      response,
+      "Unable to update journal."
+    );
+
+  if (!response.ok) {
+    throw new Error(
+      result.error || "Unable to update journal."
+    );
+  }
+
+  return result;
+
 }
 
 async function deleteEntry(id) {
