@@ -908,10 +908,10 @@ document
 
 function renderProfileHeader(profile) {
   const userName =
-    document.getElementById("userName");
+    document.querySelector(".sidebar-profile-name");
 
   if (userName) {
-    userName.textContent = `Hello, ${profile.display_name}`;
+    userName.textContent = profile.display_name;
   }
 
   const avatar =

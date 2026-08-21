@@ -24,30 +24,56 @@
 .image-cut-context-menu {
   position: fixed;
   z-index: 2000;
-  display: flex;
+  min-height: 36px;
+  padding: 8px 10px;
   flex-direction: column;
   min-width: 120px;
   padding: 0.3rem;
-  border: 1px solid #dee2e6;
-  border-radius: 0.5rem;
+  width: 12px;
+  height: 12px;
   background: #ffffff;
-  box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.12);
+  min-width: 12px;
 }
 
 .image-cut-context-menu__item {
+  position: relative;
   border: none;
   background: transparent;
-  padding: 0.45rem 0.6rem;
+  padding: 8px 30px 8px 8px;
   text-align: left;
   border-radius: 0.35rem;
   cursor: pointer;
   font-size: 0.95rem;
 }
-
-.image-cut-context-menu__item:hover {
+  width: 14px;
+  height: 14px;
   background: #f3f4f6;
+  min-width: 14px;
+
+
+body.sidebar-collapsed .sidebar-item-content {
+
+  flex: 0 0 auto;
+
 }
 
+body.sidebar-collapsed .journal-actions {
+
+  position: absolute;
+  top: 50%;
+  right: 4px;
+  transform: translateY(-50%);
+
+}
+
+body.sidebar-collapsed .journal-actions-button {
+
+  width: 20px;
+  height: 20px;
+
+  font-size: 12px;
+
+}
   html,
     body {
       height: 100%;
@@ -1630,19 +1656,42 @@ body.sidebar-collapsed .sidebar-logo-collapsed {
 
 body.sidebar-collapsed .sidebar-item {
 
+  position: relative;
     justify-content: center;
 
-    padding: 12px 0;
+  padding: 8px 30px 8px 8px;
 
 }
 
 body.sidebar-collapsed .journal-sidebar-color {
 
-    width: 18px;
+  width: 14px;
 
-    height: 18px;
+  height: 14px;
 
-    min-width: 18px;
+  min-width: 14px;
+
+}
+
+body.sidebar-collapsed .sidebar-item-content {
+
+  flex: 0 0 auto;
+
+}
+
+body.sidebar-collapsed .journal-actions {
+
+  position: absolute;
+  top: 50%;
+  right: 4px;
+  transform: translateY(-50%);
+
+}
+
+body.sidebar-collapsed .journal-actions-button {
+
+  width: 24px;
+  height: 24px;
 
 }
 

@@ -4,11 +4,27 @@ const fs = require("fs");
 const app = express();
 const PORT = process.env.PORT || 3000;
 const HOST = process.env.HOST || "127.0.0.1";
+const db = require("./database/db");
 
 const uploadsDir = path.join(__dirname, "uploads");
 fs.mkdirSync(uploadsDir, { recursive: true });
 
 app.use(express.json());
+
+app.get("/", (req, res) => {
+  db.get(
+    "SELECT id FROM profile WHERE id = 1",
+    (err, profile) => {
+      if (err) {
+        res.redirect("/welcome.html");
+        return;
+      }
+
+      res.redirect(profile ? "/index.html" : "/welcome.html");
+    }
+  );
+});
+
 app.use(express.static("public"));
 app.use("/uploads", express.static(uploadsDir));
 
