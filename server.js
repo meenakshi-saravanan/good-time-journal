@@ -59,12 +59,24 @@ app.get("/journals/:id", (req, res) => {
   res.sendFile("journal.html", { root: "public" });
 });
 
-const server = app.listen(PORT, HOST, () => {
-  console.log(`Good Time Journal is running at http://${HOST}:${PORT}`);
-});
+function startServer() {
+  return new Promise((resolve, reject) => {
+    const server = app.listen(PORT, HOST, () => {
+      console.log(`Good Time Journal is running at http://${HOST}:${PORT}`);
+      resolve(server);
+    });
 
-server.on("error", (err) => {
-  console.error(`Unable to start server on ${HOST}:${PORT}`);
-  console.error(err.message);
-  process.exit(1);
-});
+    server.on("error", (err) => {
+      console.error(`Unable to start server on ${HOST}:${PORT}`);
+      console.error(err.message);
+      reject(err);
+    });
+  });
+}
+
+module.exports = {
+  app,
+  startServer,
+  PORT,
+  HOST,
+};
