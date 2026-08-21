@@ -4,8 +4,15 @@ const fs = require("fs");
 const multer = require("multer");
 
 const router = express.Router();
-const uploadsDir = path.join(__dirname, "..", "uploads");
 
+let uploadsDir;
+
+if (process.versions.electron) {
+  const { app } = require("electron");
+  uploadsDir = path.join(app.getPath("userData"), "uploads");
+} else {
+  uploadsDir = path.join(__dirname, "..", "uploads");
+}
 fs.mkdirSync(uploadsDir, { recursive: true });
 
 const storage = multer.diskStorage({

@@ -2,11 +2,12 @@
   "name": "good-time-journal",
   "version": "1.0.0",
   "main": "electron/main.js",
-"scripts": {
-  "start": "node server.js",
-  "electron": "electron ."
-},
-  "dependencies":{
+  "scripts": {
+    "start": "node server.js",
+    "electron": "electron .",
+    "build": "electron-builder"
+  },
+  "dependencies": {
     "@tiptap/core": "^3.27.1",
     "@tiptap/extension-highlight": "^3.27.1",
     "@tiptap/extension-image": "^3.27.1",
@@ -19,6 +20,19 @@
     "sqlite3": "^6.0.1"
   },
   "devDependencies": {
-    "electron": "^43.4.1"
+    "electron": "^43.4.1",
+    "electron-builder": "^26.15.3"
+  },
+
+  "build" : {
+  "appId": "com.chapters.app",
+  "productName": "Chapters",
+  "directories": {
+    "output": "dist"
+  },
+  "win": {
+    "target": "nsis"
   }
 }
+}
+

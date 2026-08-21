@@ -6,7 +6,15 @@ const PORT = process.env.PORT || 3000;
 const HOST = process.env.HOST || "127.0.0.1";
 const db = require("./database/db");
 
-const uploadsDir = path.join(__dirname, "uploads");
+let uploadsDir;
+
+if (process.versions.electron) {
+  const { app } = require("electron");
+  uploadsDir = path.join(app.getPath("userData"), "uploads");
+} else {
+  uploadsDir = path.join(__dirname, "uploads");
+}
+
 fs.mkdirSync(uploadsDir, { recursive: true });
 
 app.use(express.json());
