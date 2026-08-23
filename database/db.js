@@ -1,11 +1,25 @@
 const sqlite3 = require("sqlite3").verbose();
-
 const path = require("path");
+const fs = require("fs");
 
-console.log("Current working directory:", process.cwd());
-console.log("Database path:", path.resolve("./journal.db"));
+const isElectron = process.versions.electron;
 
-const db = new sqlite3.Database("./journal.db", (err) => {
+let dataDir;
+
+if (isElectron) {
+  const { app } = require("electron");
+  dataDir = app.getPath("userData");
+} else {
+  dataDir = __dirname;
+}
+
+fs.mkdirSync(dataDir, { recursive: true });
+
+const dbPath = path.join(dataDir, "journal.db");
+
+console.log("Database path:", dbPath);
+
+const db = new sqlite3.Database(dbPath, (err) => {
   if (err) {
     console.error(err.message);
   } else {
