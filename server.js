@@ -11,6 +11,11 @@ const db = require("./database/db");
 
 // Absolute path to the public folder
 const publicDir = path.join(__dirname, "public");
+const installerPath = process.env.CHAPTERS_INSTALLER_PATH || path.join(
+  __dirname,
+  "dist",
+  "Chapters Setup 1.0.0.exe"
+);
 
 let uploadsDir;
 
@@ -54,6 +59,22 @@ app.use(
   "/uploads",
   express.static(uploadsDir)
 );
+
+app.get("/download", (req, res) => {
+  res.sendFile(path.join(publicDir, "download.html"));
+});
+
+app.get("/download/windows", (req, res, next) => {
+  res.download(
+    installerPath,
+    "Chapters-Setup-1.0.0.exe",
+    (error) => {
+      if (error && !res.headersSent) {
+        next(error);
+      }
+    }
+  );
+});
 
 /* API ROUTES */
 
@@ -125,3 +146,7 @@ module.exports = {
   PORT,
   HOST
 };
+
+if (require.main === module) {
+  startServer();
+}
